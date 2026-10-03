@@ -1,6 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { QrCode } from '@/components/qr';
 import { Badge } from '@/components/ui';
 import type { PaybackCard } from '@/lib/cardData';
 import { cn } from '@/lib/utils';
@@ -35,10 +34,6 @@ function toneClasses(card: PaybackCard) {
     inkSoft: dark ? 'text-slate-600/80' : 'text-white/60',
     /** Faintest ink — "Demo card" caption, back-face legal line. */
     inkFaint: dark ? 'text-slate-600/70' : 'text-white/45',
-    /** Translucent panels on the back face. */
-    panel: dark ? 'bg-slate-900/10' : 'bg-white/15',
-    /** Outline that separates a translucent panel from the metal. */
-    panelBorder: dark ? 'border-slate-900/15' : 'border-white/20',
     /** Badge / network mark. */
     badge: dark
       ? 'border-slate-900/20 bg-slate-900/[0.06] text-slate-800'
@@ -192,10 +187,10 @@ export function NetworkMark({ label, className }: { label: string; className?: s
   );
 }
 
-function Wordmark({ className }: { className?: string }) {
+function Wordmark({ className, iconClass }: { className?: string; iconClass?: string }) {
   return (
     <span className={cn('inline-flex items-center gap-1.5 font-display text-[13px] font-extrabold tracking-tight', className)}>
-      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+      <svg viewBox="0 0 24 24" className={cn('h-4 w-4', iconClass)} aria-hidden>
         <path d="M12 2.5 21 7.4v9.2L12 21.5 3 16.6V7.4L12 2.5Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
         <path d="M7.5 14.4 12 8.2l4.5 6.2" fill="none" stroke="#34d399" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -204,68 +199,136 @@ function Wordmark({ className }: { className?: string }) {
   );
 }
 
-/** Back — magstripe, signature panel, masked CVV, secure element, demo verify code. */
+/**
+ * Back — magnetic stripe, signature panel, masked CVV, embossed PAN and
+ * security small print, laid out the way a real ISO/IEC 7810 back is: the
+ * magstripe runs full-bleed across the top, the signature panel sits directly
+ * beneath it, and the card number is embossed in four groups above the issuer
+ * line.
+ */
 export function CardBack({ card, size, shine }: { card: PaybackCard; size: CardSize; shine: { x: number; y: number } }) {
   const cfg = SIZES[size];
   const tone = toneClasses(card);
+
+  /** Embossed digits: four groups, only the last four revealed. */
+  const panGroups = ['••••', '••••', '••••', card.last4];
+
+  /**
+   * Face furniture is sized as a fraction of the card's own width so the back
+   * keeps identical proportions at `sm`, `md` and `lg` instead of the fixed
+   * pixel values drifting out of balance on the smallest card.
+   */
+  const px = (n: number) => `${Math.round((n / 340) * cfg.width)}px`;
+
   return (
     <CardSurface card={card} size={size} shine={shine}>
-      {/* Magnetic stripe with fine grooves */}
+      {/* Magnetic stripe — full bleed, fine grooves, soft top-to-bottom gloss. */}
       <div
-        className="absolute inset-x-0 top-0 h-[24%] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
+        className="absolute inset-x-0 top-0 h-[21%]"
         style={{
           backgroundImage:
-            'repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 3px), linear-gradient(180deg,#0f172a,#1e293b 60%,#0f172a)',
+            'repeating-linear-gradient(90deg, rgba(255,255,255,0.045) 0px, rgba(255,255,255,0.045) 1px, transparent 1px, transparent 3px), linear-gradient(180deg,#020617 0%,#1e293b 32%,#0b1220 68%,#020617 100%)',
         }}
         aria-hidden
       />
+      {/* Crisp lip where the stripe meets the card surface. */}
+      <div className="absolute inset-x-0 top-[21%] h-px bg-white/30" aria-hidden />
 
-      <div className="mt-[26%] flex flex-1 items-end justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-2">
-          {/* Signature panel */}
-          <div className="rounded-lg bg-gradient-to-b from-white/95 to-slate-200/90 p-1.5">
-            <div className="h-5 rounded-md bg-[repeating-linear-gradient(90deg,rgba(100,116,139,0.4)_0px,rgba(100,116,139,0.4)_1px,transparent_1px,transparent_4px)]" />
-            <p className="mt-0.5 text-[6px] font-bold uppercase tracking-[0.18em] text-slate-500">Authorised signature</p>
+      <div className="mt-[23.5%] flex flex-1 flex-col justify-between" style={{ gap: px(6) }}>
+        {/* Signature panel + masked CVV — the CVV is printed on real cards and
+            is always masked here. */}
+        <div className="flex items-stretch" style={{ gap: px(6) }}>
+          <div
+            className="min-w-0 flex-1 overflow-hidden rounded-[5px] bg-gradient-to-b from-white to-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.25)] ring-1 ring-slate-900/10"
+            style={{ padding: `${px(4)}px ${px(7)}px` }}
+          >
+            <div className="flex items-end" style={{ height: px(22) }}>
+              <span
+                className="truncate font-serif italic leading-none text-slate-700"
+                style={{ fontSize: px(12) }}
+              >
+                {card.holder}
+              </span>
+            </div>
+            <div className="h-px bg-slate-300/80" style={{ marginTop: px(3) }} />
+            <p
+              className="truncate font-bold uppercase leading-none tracking-[0.2em] text-slate-400"
+              style={{ fontSize: px(5.5), marginTop: px(3) }}
+            >
+              Authorised signature
+            </p>
           </div>
 
-          {/* Masked CVV + support number — never exposed */}
-          <div className="flex gap-2">
-            <div className="rounded-lg bg-white/90 px-2 py-1">
-              <p className="text-[6px] font-bold uppercase tracking-[0.16em] text-slate-500">CVV</p>
-              <p className="tnum font-mono text-[11px] font-bold text-slate-800">•••</p>
-            </div>
-            <div className={cn('rounded-lg px-2 py-1', tone.panel, tone.panelBorder, 'border')}>
-              <p className={cn('text-[6px] font-bold uppercase tracking-[0.16em]', tone.inkSoft)}>Support</p>
-              <p className={cn('tnum font-mono text-[10px] font-semibold', tone.ink)}>+92 21 ••• 0100</p>
-            </div>
+          <div
+            className="flex shrink-0 flex-col items-center justify-center rounded-[5px] bg-gradient-to-b from-white to-slate-100 shadow-[0_1px_2px_rgba(15,23,42,0.25)] ring-1 ring-slate-900/10"
+            style={{ width: px(40), paddingBlock: px(4) }}
+          >
+            <span
+              className="font-bold uppercase leading-none tracking-[0.14em] text-slate-400"
+              style={{ fontSize: px(5.5) }}
+            >
+              CVV
+            </span>
+            <span
+              className="tnum font-mono font-bold leading-none text-slate-700"
+              style={{ fontSize: px(11), marginTop: px(1) }}
+            >
+              •••
+            </span>
           </div>
-
-          <p className={cn('text-[6px] font-medium uppercase leading-tight tracking-[0.12em]', tone.inkFaint)}>
-            Property of PAYBACK (demonstration). No real funds or card network.
-          </p>
         </div>
 
-        {/* Secure element module + demo verification code */}
-        <div className="flex shrink-0 flex-col items-center gap-1.5">
-          <div className={cn('rounded-xl border p-1.5', tone.panel, tone.panelBorder)}>
-            <CardChip className="h-5 w-7" />
-          </div>
-          <p className={cn('text-center text-[6px] font-bold uppercase leading-tight tracking-[0.12em]', tone.inkSoft)}>
-            {card.secureElement.present ? 'Secure element' : 'Tokenised'}
-          </p>
-          <div className="rounded-lg bg-white p-1">
-            <QrCode value={`PAYBACK1:card:${card.id}:${card.last4}`} size={size === 'lg' ? 44 : 34} label="Card verification code" />
-          </div>
+        {/* Embossed card number — four evenly spaced groups. */}
+        <div
+          className="flex items-center justify-between rounded-[5px] ring-1"
+          style={{
+            padding: `${px(4)}px ${px(8)}px`,
+            background: tone.dark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)',
+          }}
+        >
+          {panGroups.map((group, i) => (
+            <span
+              key={i}
+              className={cn(
+                'tnum font-mono leading-none tracking-[0.12em]',
+                i === panGroups.length - 1 ? cn(tone.ink, 'font-bold') : tone.inkSoft
+              )}
+              style={{ fontSize: px(10) }}
+            >
+              {group}
+            </span>
+          ))}
+        </div>
+
+        {/* Security small print */}
+        <p
+          className={cn('font-medium uppercase leading-[1.45] tracking-[0.1em]', tone.inkFaint)}
+          style={{ fontSize: px(5.5) }}
+        >
+          Property of PAYBACK · Demonstration only · No real funds or card network
+        </p>
+
+        {/* Issuer + network */}
+        <div className="flex items-center justify-between" style={{ gap: px(8) }}>
+          <Wordmark
+            className={cn('text-[10px] leading-none', tone.ink)}
+            iconClass="h-[10px] w-[10px]"
+          />
+          <span className="flex items-center" style={{ gap: px(4) }}>
+            <span
+              className={cn('truncate font-bold uppercase leading-none tracking-[0.14em]', tone.inkFaint)}
+              style={{ fontSize: px(5.5) }}
+            >
+              {card.secureElement.present ? 'Secure element' : 'Tokenised'}
+            </span>
+            <NetworkMark label={card.identity.network} className={tone.badge} />
+          </span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Wordmark className={cn('text-[10px]', tone.ink, 'opacity-75')} />
-        <span className={cn('rounded-md border px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.16em]', tone.badge)}>
-          Demo
-        </span>
-      </div>
-      <span className="sr-only">Card back with masked security details. {cfg.font}</span>
+      <span className="sr-only">
+        Card back with magnetic stripe, signature panel and masked security details. {cfg.font}
+      </span>
     </CardSurface>
   );
 }
