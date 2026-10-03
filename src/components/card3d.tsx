@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { QrCode } from '@/components/qr';
 import { Badge } from '@/components/ui';
@@ -428,20 +429,32 @@ export function CardCarousel({
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(() => Math.max(0, cards.findIndex((c) => c.id === activeId)));
 
+  /**
+   * Scroll the track itself instead of using `scrollIntoView`, which also
+   * scrolls ancestor containers and made the dot/arrow state drift out of sync
+   * with the snap position.
+   */
+  const scrollToIndex = (target: number, smooth = true) => {
+    const el = trackRef.current;
+    const item = el?.children[target] as HTMLElement | undefined;
+    if (!el || !item) return;
+    // Centre the card inside the track's own scrollport.
+    const left = item.offsetLeft - (el.clientWidth - item.offsetWidth) / 2;
+    el.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' });
+  };
+
   const emit = (next: number) => {
     const clamped = Math.max(0, Math.min(cards.length - 1, next));
     setIndex(clamped);
     onActiveChange?.(cards[clamped].id);
-    const el = trackRef.current;
-    const item = el?.children[clamped] as HTMLElement | undefined;
-    item?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    scrollToIndex(clamped);
   };
 
   const onScroll = () => {
     const el = trackRef.current;
     if (!el) return;
     const center = el.scrollLeft + el.clientWidth / 2;
-    let best = index;
+    let best = 0;
     let bestDist = Number.POSITIVE_INFINITY;
     Array.from(el.children).forEach((child, i) => {
       const item = child as HTMLElement;
@@ -509,31 +522,49 @@ export function CardCarousel({
         })}
       </div>
 
-      {/* Controls */}
-      <div className="mt-2 flex items-center justify-center gap-4">
+      {/* Controls — every dot is tinted with its own card colour, so the button
+          always matches the card it reveals. */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-3">
         <button
           type="button"
           onClick={() => emit(index - 1)}
           disabled={index === 0}
           aria-label="Previous card"
-          className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40"
+          title="Previous card"
+          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 disabled:pointer-events-none disabled:opacity-35"
         >
-          ‹
+          <ChevronLeft className="h-5 w-5" aria-hidden />
         </button>
 
-        <div className="flex items-center gap-1.5">
-          {cards.map((card, i) => (
-            <button
-              key={card.id}
-              type="button"
-              onClick={() => emit(i)}
-              aria-label={`Show ${card.identity.name}`}
-              aria-current={i === index}
-              className={`focus-ring h-2 rounded-full transition-all duration-300 ${
-                i === index ? 'w-7 bg-emerald-500' : 'w-2 bg-slate-300 hover:bg-slate-400'
-              }`}
-            />
-          ))}
+        <div className="flex items-center gap-1" role="tablist" aria-label="Choose a card">
+          {cards.map((card, i) => {
+            const active = i === index;
+            return (
+              <button
+                key={card.id}
+                type="button"
+                role="tab"
+                onClick={() => emit(i)}
+                aria-label={`Show ${card.identity.name}`}
+                aria-selected={active}
+                title={card.identity.name}
+                className={cn(
+                  'flex h-7 items-center justify-center rounded-full outline-none transition-all duration-300',
+                  'focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
+                  active ? 'w-8' : 'w-5 hover:w-8'
+                )}
+              >
+                <span
+                  className="block rounded-full transition-all duration-300"
+                  style={{
+                    backgroundColor: active ? card.identity.accent : '#CBD5E1',
+                    height: active ? 10 : 8,
+                    width: active ? 26 : 8,
+                  }}
+                />
+              </button>
+            );
+          })}
         </div>
 
         <button
@@ -541,15 +572,39 @@ export function CardCarousel({
           onClick={() => emit(index + 1)}
           disabled={index === cards.length - 1}
           aria-label="Next card"
-          className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40"
+          title="Next card"
+          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 disabled:pointer-events-none disabled:opacity-35"
         >
-          ›
+          <ChevronRight className="h-5 w-5" aria-hidden />
         </button>
-
-        <span className="tnum w-14 text-right text-xs font-semibold text-slate-500">
-          {String(index + 1).padStart(2, '0')} / {String(cards.length).padStart(2, '0')}
-        </span>
       </div>
+
+      {/* Named key — so every control maps to a card you can read, not just a dot */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5">
+        {cards.map((card, i) => (
+          <button
+            key={card.id}
+            type="button"
+            onClick={() => emit(i)}
+            aria-current={i === index}
+            title={`Show ${card.identity.name}`}
+            className={cn(
+              'focus-ring inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors',
+              i === index ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'
+            )}
+          >
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: card.identity.accent }} aria-hidden />
+            {card.identity.name.replace('PAYBACK ', '')}
+          </button>
+        ))}
+      </div>
+
+      <p className="mt-3 text-center text-xs font-medium text-slate-400">
+        <span className="tnum">
+          {String(index + 1).padStart(2, '0')} / {String(cards.length).padStart(2, '0')}
+        </span>{' '}
+        — {cards[index].identity.name}
+      </p>
 
       <p className="sr-only">Card width {cfg.width}px. Use left and right arrow keys to browse cards.</p>
     </div>
