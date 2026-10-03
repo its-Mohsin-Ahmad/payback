@@ -355,6 +355,7 @@ export function PaybackCard3D({
   float = false,
   showPan = false,
   className,
+  fill = false,
   onSideChange,
   onActivate,
   flipLabel = true,
@@ -367,6 +368,11 @@ export function PaybackCard3D({
   /** Reveal the synthetic demo PAN (never a real credential). */
   showPan?: boolean;
   className?: string;
+  /**
+   * Stretch to the container width instead of using the fixed designed width.
+   * The card still caps at its designed size, so it never renders oversized.
+   */
+  fill?: boolean;
   /** Reports which face is now showing. Observation only — never selection. */
   onSideChange?: (side: CardSide) => void;
   /** Fired whenever the card is activated (click, Enter or Space). */
@@ -413,8 +419,13 @@ export function PaybackCard3D({
 
   return (
     /* maxWidth keeps the card inside narrow grid columns while still using the
-       full designed width wherever there is room. */
-    <div className={cn('select-none', className)} style={{ width: cfg.width, maxWidth: '100%' }}>
+       full designed width wherever there is room. `fill` drops the fixed width
+       entirely so the card stretches to its container — the inline width would
+       otherwise beat any width utility passed via className. */
+    <div
+      className={cn('select-none', className)}
+      style={fill ? { width: '100%', maxWidth: cfg.width } : { width: cfg.width, maxWidth: '100%' }}
+    >
       <div className="relative" style={{ perspective: '1400px' }}>
         {/* Contact shadow that shifts with the tilt */}
         <div

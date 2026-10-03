@@ -222,32 +222,44 @@ export default function HomePage() {
 
         {/* 3D card showcase */}
         <section className="rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 shadow-card sm:p-10">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              {/* Green, Platinum and Gold shown together */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {[
-                  { card: paybackCards[0], label: 'Green', hint: 'Everyday' },
-                  { card: paybackCards[1], label: 'Platinum', hint: 'Metal' },
-                  { card: paybackCards[2], label: 'Gold', hint: 'Signature' },
-                ].map((item) => (
-                  <div key={item.label} className="flex min-w-0 flex-col items-center gap-2">
-                    <PaybackCard3D card={item.card} size="sm" />
-                    <p className="text-sm font-bold text-slate-900">{item.label}</p>
-                    <p className="text-xs text-slate-500">{item.hint}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/*
+            Green, Platinum and Gold get a full-width row of their own. Splitting
+            this section in two left the card column narrower than three cards
+            need, so each one was squeezed by `maxWidth: 100%` and rendered
+            smaller than its designed size.
 
+            Three `md` cards need ~1100px, which only fits once the section is
+            genuinely wide (lg and up). Below that they stack full width, where
+            `maxWidth: 100%` lets each card grow into the column instead of
+            being clipped.
+          */}
+          <div className="grid grid-cols-1 items-start justify-items-center gap-8 sm:gap-10 lg:grid-cols-3 lg:gap-10">
+            {[
+              { card: paybackCards[0], label: 'Green', hint: 'Everyday' },
+              { card: paybackCards[1], label: 'Platinum', hint: 'Metal' },
+              { card: paybackCards[2], label: 'Gold', hint: 'Signature' },
+            ].map((item) => (
+              <div key={item.label} className="flex w-full min-w-0 flex-col items-center gap-2">
+                {/* `fill` makes the card stretch on narrow screens and settle at
+                    its designed 340px once the three-across row has room. */}
+                <PaybackCard3D card={item.card} size="md" fill className="w-full" />
+                <p className="text-sm font-bold text-slate-900">{item.label}</p>
+                <p className="text-xs text-slate-500">{item.hint}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 grid items-center gap-10 border-t border-slate-200/80 pt-10 lg:grid-cols-2">
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Meet Your PAYBACK Card.</h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
                 Three signature finishes — Green for everyday banking, Platinum metal and Gold for the highest tier. Flip
-                any card to see the magstripe, signature panel, secure element and verification code.
+                any card to see the magstripe, signature panel and embossed card number.
               </p>
+            </div>
 
-              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div>
+              <ul className="grid gap-3 sm:grid-cols-2">
                 {[
                   { icon: Fingerprint, label: 'Smart chip', hint: 'PAYBACK Secure Element' },
                   { icon: CreditCard, label: 'Contactless', hint: 'Tap to pay instantly' },
