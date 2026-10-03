@@ -67,7 +67,12 @@ function CardSurface({
   const cfg = SIZES[size];
   const finish = card.identity.finish;
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-2xl" style={{ backgroundImage: card.identity.base }}>
+    /* Every visual layer is inert, so only the explicit hit target in
+       PaybackCard3D receives clicks — no overlay can ever block the flip. */
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+      style={{ backgroundImage: card.identity.base }}
+    >
       {finish === 'brushed' || finish === 'metal' ? <div className="pb-brushed absolute inset-0" aria-hidden /> : null}
       <div className="pb-micro absolute inset-0 opacity-40" aria-hidden />
       <div className="absolute inset-0" style={{ backgroundImage: card.identity.sheen, opacity: 0.5 }} aria-hidden />
@@ -83,7 +88,7 @@ function CardSurface({
       <div style={{ padding: cfg.pad }} className="relative flex h-full flex-col justify-between">
         {children}
       </div>
-      <div className={cn('pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset', toneClasses(card).ring)} aria-hidden />
+      <div className={cn('absolute inset-0 rounded-2xl ring-1 ring-inset', toneClasses(card).ring)} aria-hidden />
     </div>
   );
 }
@@ -335,7 +340,9 @@ export function PaybackCard3D({
     : `rotateX(${tilt.rx}deg) rotateY(${tilt.ry + flipDeg}deg)`;
 
   return (
-    <div className={cn('select-none', className)} style={{ width: cfg.width }}>
+    /* maxWidth keeps the card inside narrow grid columns while still using the
+       full designed width wherever there is room. */
+    <div className={cn('select-none', className)} style={{ width: cfg.width, maxWidth: '100%' }}>
       <div className="relative" style={{ perspective: '1400px' }}>
         {/* Contact shadow that shifts with the tilt */}
         <div
@@ -346,25 +353,11 @@ export function PaybackCard3D({
 
         <div
           ref={wrap}
-          role={interactive ? 'button' : undefined}
-          tabIndex={interactive ? 0 : undefined}
-          aria-label={interactive ? `${card.identity.name}, ${card.maskedPan}. Activate to ${side === 'front' ? 'view the back' : 'return to the front'}.` : undefined}
-          aria-pressed={interactive ? side === 'back' : undefined}
-          onClick={interactive ? flip : undefined}
-          onKeyDown={
-            interactive
-              ? (e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    flip();
-                  }
-                }
-              : undefined
-          }
           onPointerMove={onPointerMove}
           onPointerLeave={reset}
           className={cn(
-            'preserve-3d relative w-full cursor-pointer rounded-2xl pb-contact-shadow transition-transform duration-500 ease-out motion-reduce:transition-none',
+            'preserve-3d relative w-full rounded-2xl pb-contact-shadow transition-transform duration-500 ease-out motion-reduce:transition-none',
+            interactive && 'cursor-pointer',
             float && !reduced && 'animate-float'
           )}
           style={{ aspectRatio: String(ASPECT), transform }}
@@ -387,14 +380,28 @@ export function PaybackCard3D({
 
           {/* Glass edge highlight */}
           <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/15" aria-hidden />
+
+          {/* Explicit hit target — frontmost plane, covers both faces so the
+              card is clickable everywhere regardless of flip state or which
+              decorative layer sits on top. */}
+          {interactive ? (
+            <button
+              type="button"
+              tabIndex={0}
+              aria-label={`${card.identity.name}, ${card.maskedPan}. Activate to ${side === 'front' ? 'view the back' : 'return to the front'}.`}
+              aria-pressed={side === 'back'}
+              onClick={flip}
+              className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-2xl border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+            />
+          ) : null}
         </div>
 
         {flipLabel && interactive ? (
-          <div className="mt-3 flex items-center justify-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
             <button
               type="button"
               onClick={flip}
-              className="focus-ring rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
+              className="focus-ring shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
             >
               {side === 'front' ? 'View back' : 'View front'}
             </button>

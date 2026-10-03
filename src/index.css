@@ -98,7 +98,10 @@
     -webkit-backface-visibility: hidden;
   }
 
-  /* Card edge: a real card has thickness */
+  /* Card edge: a real card has thickness.
+     Never interactive — it sits at translateZ(-6px) and, once the card is
+     flipped, rotates to the frontmost plane where it would otherwise swallow
+     every click on the back face. */
   .pb-card-edge {
     position: absolute;
     inset: 0;
@@ -106,6 +109,7 @@
     transform: translateZ(-6px);
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(15, 23, 42, 0.42));
     filter: blur(0.4px);
+    pointer-events: none;
   }
 
   /* Metallic EMV chip */

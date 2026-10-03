@@ -231,7 +231,7 @@ export default function HomePage() {
                   { card: paybackCards[1], label: 'Platinum', hint: 'Metal' },
                   { card: paybackCards[2], label: 'Gold', hint: 'Signature' },
                 ].map((item) => (
-                  <div key={item.label} className="flex flex-col items-center gap-2">
+                  <div key={item.label} className="flex min-w-0 flex-col items-center gap-2">
                     <PaybackCard3D card={item.card} size="sm" />
                     <p className="text-sm font-bold text-slate-900">{item.label}</p>
                     <p className="text-xs text-slate-500">{item.hint}</p>
