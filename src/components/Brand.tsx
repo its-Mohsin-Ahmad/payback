@@ -1,23 +1,22 @@
 import { Link } from 'react-router-dom';
+import { PaybackHexTile } from '@/components/brandMark';
 import { cn } from '@/lib/utils';
 
 /**
- * PAYBACK wordmark + mark. The mark is a stylised "P" formed from an
- * upward chevron (growth) inside a rounded square (a card).
+ * PAYBACK wordmark + hexagonal mark.
+ *
+ * The mark is the card's hexagon with its chevron, filled so it holds its own
+ * in the header, admin rail and footer. Geometry lives in `brandMark.tsx`,
+ * which is shared with the physical card artwork.
  */
 export function LogoMark({ className, tone = 'emerald', size = 36 }: { className?: string; tone?: 'emerald' | 'navy' | 'white'; size?: number }) {
-  const bg = tone === 'emerald' ? '#10B981' : tone === 'navy' ? '#0F172A' : '#FFFFFF';
-  const fg = tone === 'white' ? '#0F172A' : '#FFFFFF';
+  const background = tone === 'emerald' ? '#10B981' : tone === 'navy' ? '#0F172A' : '#FFFFFF';
+  // Emerald fill needs a light chevron to read; navy and white tiles take the
+  // brand emerald, matching the card.
+  const chevron = tone === 'emerald' ? '#FFFFFF' : '#34D399';
   return (
-    <span
-      className={cn('inline-flex shrink-0 items-center justify-center rounded-xl', className)}
-      style={{ width: size, height: size, backgroundColor: bg }}
-      aria-hidden
-    >
-      <svg viewBox="0 0 24 24" width={size * 0.62} height={size * 0.62} fill="none" stroke={fg} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 19V7.5A3.5 3.5 0 0 1 9.5 4h2A3.5 3.5 0 0 1 15 7.5v0A3.5 3.5 0 0 1 11.5 11H9" />
-        <path d="M12 15.5 15.5 12 19 15.5" />
-      </svg>
+    <span className={cn('inline-flex shrink-0 items-center justify-center', className)} style={{ width: size, height: size }}>
+      <PaybackHexTile size={size} background={background} chevron={chevron} />
     </span>
   );
 }

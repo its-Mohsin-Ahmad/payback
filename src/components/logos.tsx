@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { CHEVRON_PATH, HEX_PATH } from '@/components/brandMark';
 import { cn } from '@/lib/utils';
 
 /**
@@ -64,19 +65,30 @@ export function ProviderLogo({
   );
 }
 
+/**
+ * The brand mark is authored in a 24-unit viewBox; this file's provider marks
+ * use 32. This transform maps one onto the other — uniform scale, re-centred —
+ * so the PAYBACK glyph is the *same* artwork as the card and site logo rather
+ * than a hand-copied approximation that can drift.
+ *
+ * The hexagon/chevron group is centred on (12, 12) in 24-unit space; the 32-unit
+ * viewBox is centred on (16, 16).
+ */
+const BRAND_TRANSFORM = 'translate(16 16) scale(1.25) translate(-12 -12)';
+
 interface MarkSpec {
   tile: string;
   path: React.ReactNode;
 }
 
 const MARKS: Record<ProviderMarkId, MarkSpec> = {
-  /* PAYBACK — hexagon shield with the brand chevron. */
+  /* PAYBACK — the brand hexagon and chevron, shared with the site and card. */
   payback: {
     tile: 'bg-navy',
     path: (
-      <g fill="none" stroke="#34D399" strokeWidth="2.1" strokeLinejoin="round" strokeLinecap="round">
-        <path d="M16 4.5 27 10.4v11.2L16 27.5 5 21.6V10.4L16 4.5Z" />
-        <path d="M11 19 16 12.2 21 19" />
+      <g transform={BRAND_TRANSFORM} fill="none" stroke="#34D399" strokeWidth="2.1" strokeLinejoin="round" strokeLinecap="round">
+        <path d={HEX_PATH} />
+        <path d={CHEVRON_PATH} />
       </g>
     ),
   },

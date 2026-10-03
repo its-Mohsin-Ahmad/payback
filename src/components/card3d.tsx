@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { PaybackGlyph } from '@/components/brandMark';
 import { Badge } from '@/components/ui';
 import type { PaybackCard } from '@/lib/cardData';
 import { cn } from '@/lib/utils';
@@ -187,13 +188,11 @@ export function NetworkMark({ label, className }: { label: string; className?: s
   );
 }
 
+/** Card wordmark — the site's hexagonal mark, unchanged by card tint. */
 function Wordmark({ className, iconClass }: { className?: string; iconClass?: string }) {
   return (
     <span className={cn('inline-flex items-center gap-1.5 font-display text-[13px] font-extrabold tracking-tight', className)}>
-      <svg viewBox="0 0 24 24" className={cn('h-4 w-4', iconClass)} aria-hidden>
-        <path d="M12 2.5 21 7.4v9.2L12 21.5 3 16.6V7.4L12 2.5Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M7.5 14.4 12 8.2l4.5 6.2" fill="none" stroke="#34d399" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <PaybackGlyph className={cn('h-4 w-4', iconClass)} />
       PAYBACK
     </span>
   );
