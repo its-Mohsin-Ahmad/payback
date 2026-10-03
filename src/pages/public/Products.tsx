@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CreditCard, HandCoins, ShieldCheck, TrendingUp, Wallet } from 'lucide-react';
 import { Card, CardBody, DemoBanner, SegmentedControl } from '@/components/ui';
+import { ProviderLogo } from '@/components/logos';
 import { insuranceProducts, investmentProducts, loanProducts, PROVIDERS } from '@/data/products';
 
 type Tab = 'Accounts' | 'Cards' | 'Loans' | 'Investments' | 'Insurance';
@@ -146,7 +147,7 @@ export default function ProductsPage() {
           {PROVIDERS.map((provider) => (
             <div key={provider.id} className="rounded-xl border border-slate-100 p-3.5">
               <div className="flex items-center gap-2.5">
-                <span className="h-6 w-6 rounded-full" style={{ backgroundColor: provider.color }} aria-hidden />
+                <ProviderLogo mark={provider.id} tileClassName="h-7 w-7" />
                 <p className="text-sm font-semibold text-slate-900">{provider.name}</p>
               </div>
               <p className="mt-1 text-xs text-slate-500">

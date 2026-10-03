@@ -17,6 +17,37 @@ const SIZES: Record<CardSize, { width: number; pad: number; font: string; pan: s
 };
 
 /* ------------------------------------------------------------------ */
+/* Text tone (light surfaces need dark ink)                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Platinum and Gold are light metal surfaces, so their ink has to flip to
+ * dark. Every tone-aware class is resolved from here.
+ */
+function toneClasses(card: PaybackCard) {
+  const dark = card.identity.textTone === 'dark';
+  return {
+    dark,
+    /** Primary ink — PAN, holder, expiry, wordmark. */
+    ink: dark ? 'text-slate-900' : 'text-white',
+    /** Secondary ink — micro labels. */
+    inkSoft: dark ? 'text-slate-600/80' : 'text-white/60',
+    /** Faintest ink — "Demo card" caption, back-face legal line. */
+    inkFaint: dark ? 'text-slate-600/70' : 'text-white/45',
+    /** Translucent panels on the back face. */
+    panel: dark ? 'bg-slate-900/10' : 'bg-white/15',
+    /** Outline that separates a translucent panel from the metal. */
+    panelBorder: dark ? 'border-slate-900/15' : 'border-white/20',
+    /** Badge / network mark. */
+    badge: dark
+      ? 'border-slate-900/20 bg-slate-900/[0.06] text-slate-800'
+      : 'border-white/25 bg-white/10 text-white/85',
+    /** Surface ring — dark cards need a light edge, light cards a dark one. */
+    ring: dark ? 'ring-slate-900/10' : 'ring-white/20',
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* Card faces                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -51,7 +82,7 @@ function CardSurface({
       <div style={{ padding: cfg.pad }} className="relative flex h-full flex-col justify-between">
         {children}
       </div>
-      <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/20" aria-hidden />
+      <div className={cn('pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset', toneClasses(card).ring)} aria-hidden />
     </div>
   );
 }
@@ -69,36 +100,37 @@ export function CardFront({
   showPan: boolean;
 }) {
   const cfg = SIZES[size];
+  const tone = toneClasses(card);
   return (
     <CardSurface card={card} size={size} shine={shine}>
       <div className="flex items-start justify-between">
-        <Wordmark />
-        <ContactlessGlyph className="text-white/85" />
+        <Wordmark className={tone.ink} />
+        <ContactlessGlyph className={tone.dark ? 'text-slate-800/80' : 'text-white/85'} />
       </div>
 
       <div className="flex items-end justify-between">
         <CardChip />
-        <NetworkMark label={card.identity.network} />
+        <NetworkMark label={card.identity.network} className={tone.badge} />
       </div>
 
       <div>
-        <div className={cn('tnum font-mono font-semibold tracking-[0.14em] text-white', cfg.pan)}>
+        <div className={cn('tnum font-mono font-semibold tracking-[0.14em]', tone.ink, cfg.pan)}>
           {showPan ? card.demoPan : card.maskedPan}
         </div>
         <div className="mt-1.5 flex items-end justify-between">
           <div>
-            <p className={cn('font-semibold uppercase tracking-[0.16em] text-white/55', cfg.font)}>Cardholder</p>
-            <p className={cn('font-semibold uppercase tracking-[0.1em] text-white', cfg.holder)}>{card.holder}</p>
+            <p className={cn('font-semibold uppercase tracking-[0.16em]', tone.inkSoft, cfg.font)}>Cardholder</p>
+            <p className={cn('font-semibold uppercase tracking-[0.1em]', tone.ink, cfg.holder)}>{card.holder}</p>
           </div>
           <div className="text-right">
-            <p className={cn('font-semibold uppercase tracking-[0.16em] text-white/55', cfg.font)}>Valid thru</p>
-            <p className={cn('tnum font-mono font-semibold text-white', cfg.holder)}>{card.expiry}</p>
+            <p className={cn('font-semibold uppercase tracking-[0.16em]', tone.inkSoft, cfg.font)}>Valid thru</p>
+            <p className={cn('tnum font-mono font-semibold', tone.ink, cfg.holder)}>{card.expiry}</p>
           </div>
         </div>
       </div>
 
       <div className="pb-holo pointer-events-none absolute right-[-16%] top-[16%] h-[50%] w-[40%] rotate-[18deg] rounded-2xl opacity-60" aria-hidden />
-      <span className="absolute bottom-1.5 right-3 text-[6px] font-bold uppercase tracking-[0.2em] text-white/40">Demo card</span>
+      <span className={cn('absolute bottom-1.5 right-3 text-[6px] font-bold uppercase tracking-[0.2em]', tone.inkFaint)}>Demo card</span>
     </CardSurface>
   );
 }
@@ -148,7 +180,7 @@ export function ContactlessGlyph({ className, stroke = 'currentColor' }: { class
 /** Demo network representation — configurable, no partnership implied. */
 export function NetworkMark({ label, className }: { label: string; className?: string }) {
   return (
-    <span className={cn('inline-flex items-center rounded-md border border-white/25 px-1.5 py-0.5 text-[7px] font-bold tracking-[0.18em] text-white/80', className)}>
+    <span className={cn('inline-flex items-center rounded-md border px-1.5 py-0.5 text-[7px] font-bold tracking-[0.18em]', className)}>
       {label}
     </span>
   );
@@ -156,7 +188,7 @@ export function NetworkMark({ label, className }: { label: string; className?: s
 
 function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5 font-display text-[13px] font-extrabold tracking-tight text-white', className)}>
+    <span className={cn('inline-flex items-center gap-1.5 font-display text-[13px] font-extrabold tracking-tight', className)}>
       <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
         <path d="M12 2.5 21 7.4v9.2L12 21.5 3 16.6V7.4L12 2.5Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
         <path d="M7.5 14.4 12 8.2l4.5 6.2" fill="none" stroke="#34d399" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -169,6 +201,7 @@ function Wordmark({ className }: { className?: string }) {
 /** Back — magstripe, signature panel, masked CVV, secure element, demo verify code. */
 export function CardBack({ card, size, shine }: { card: PaybackCard; size: CardSize; shine: { x: number; y: number } }) {
   const cfg = SIZES[size];
+  const tone = toneClasses(card);
   return (
     <CardSurface card={card} size={size} shine={shine}>
       {/* Magnetic stripe with fine grooves */}
@@ -195,23 +228,23 @@ export function CardBack({ card, size, shine }: { card: PaybackCard; size: CardS
               <p className="text-[6px] font-bold uppercase tracking-[0.16em] text-slate-500">CVV</p>
               <p className="tnum font-mono text-[11px] font-bold text-slate-800">•••</p>
             </div>
-            <div className="rounded-lg bg-white/15 px-2 py-1">
-              <p className="text-[6px] font-bold uppercase tracking-[0.16em] text-white/50">Support</p>
-              <p className="tnum font-mono text-[10px] font-semibold text-white/85">+92 21 ••• 0100</p>
+            <div className={cn('rounded-lg px-2 py-1', tone.panel, tone.panelBorder, 'border')}>
+              <p className={cn('text-[6px] font-bold uppercase tracking-[0.16em]', tone.inkSoft)}>Support</p>
+              <p className={cn('tnum font-mono text-[10px] font-semibold', tone.ink)}>+92 21 ••• 0100</p>
             </div>
           </div>
 
-          <p className="text-[6px] font-medium uppercase leading-tight tracking-[0.12em] text-white/45">
+          <p className={cn('text-[6px] font-medium uppercase leading-tight tracking-[0.12em]', tone.inkFaint)}>
             Property of PAYBACK (demonstration). No real funds or card network.
           </p>
         </div>
 
         {/* Secure element module + demo verification code */}
         <div className="flex shrink-0 flex-col items-center gap-1.5">
-          <div className="rounded-xl border border-white/20 bg-white/10 p-1.5">
+          <div className={cn('rounded-xl border p-1.5', tone.panel, tone.panelBorder)}>
             <CardChip className="h-5 w-7" />
           </div>
-          <p className="text-center text-[6px] font-bold uppercase leading-tight tracking-[0.12em] text-white/55">
+          <p className={cn('text-center text-[6px] font-bold uppercase leading-tight tracking-[0.12em]', tone.inkSoft)}>
             {card.secureElement.present ? 'Secure element' : 'Tokenised'}
           </p>
           <div className="rounded-lg bg-white p-1">
@@ -221,8 +254,8 @@ export function CardBack({ card, size, shine }: { card: PaybackCard; size: CardS
       </div>
 
       <div className="flex items-center justify-between">
-        <Wordmark className="text-[10px] opacity-70" />
-        <span className="rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.16em] text-white/70">
+        <Wordmark className={cn('text-[10px]', tone.ink, 'opacity-75')} />
+        <span className={cn('rounded-md border px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.16em]', tone.badge)}>
           Demo
         </span>
       </div>

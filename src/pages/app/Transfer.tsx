@@ -48,6 +48,7 @@ import {
 import { PageWrap } from '@/components/blocks';
 import { QrCode as ReceiptQr } from '@/components/qr';
 import { Icon } from '@/components/Icon';
+import { ProviderLogo } from '@/components/logos';
 import { PROVIDERS } from '@/data/products';
 import { accounts, quickRecipients, recipients as savedRecipients, transferLimits } from '@/data/mock';
 import { cn, money, uid } from '@/lib/utils';
@@ -253,13 +254,7 @@ function DetailsStep({ draft, update }: { draft: Draft; update: (patch: Partial<
                   active ? 'border-emerald-400 ring-2 ring-emerald-500/20' : 'border-slate-200/80'
                 )}
               >
-                <span
-                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[11px] font-extrabold text-white"
-                  style={{ backgroundColor: p.color }}
-                  aria-hidden
-                >
-                  {p.logo}
-                </span>
+                <ProviderLogo mark={p.id} tileClassName="h-9 w-9" />
                 <span className="w-full truncate text-xs font-bold text-slate-900">{p.short}</span>
                 <span className="text-[10px] leading-tight text-slate-500">{p.eta}</span>
                 {p.fee === 'Demo' ? (

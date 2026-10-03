@@ -4,6 +4,7 @@ import { LineChart } from '@/components/charts';
 import { Alert, Button, Card, CardBody, DemoBanner } from '@/components/ui';
 import { exchangeRates, rateHistory } from '@/data/mock';
 import { PROVIDERS } from '@/data/products';
+import { ProviderLogo } from '@/components/logos';
 import { money } from '@/lib/utils';
 
 const usdRates: Record<string, number> = { USD: 1, PKR: 277.5, EUR: 0.9246, GBP: 0.789, AED: 3.6725, SAR: 3.75 };
@@ -131,7 +132,7 @@ export default function RatesPage() {
             {PROVIDERS.map((provider) => (
               <div key={provider.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                 <div className="flex items-center gap-3">
-                  <span className="h-6 w-6 rounded-full" style={{ backgroundColor: provider.color }} aria-hidden />
+                  <ProviderLogo mark={provider.id} tileClassName="h-8 w-8" />
                   <div>
                     <p className="text-sm font-semibold text-slate-900">{provider.name}</p>
                     <p className="text-xs text-slate-500">{provider.tagline}</p>

@@ -17,7 +17,6 @@ import TermsPage from '@/pages/public/Terms';
 import LoginPage from '@/pages/public/Login';
 import RegisterPage from '@/pages/public/Register';
 import BranchesPublicPage from '@/pages/public/Branches';
-import NotFoundPage from '@/pages/public/NotFound';
 
 /* Customer app */
 import ScanPayPage from '@/pages/app/ScanPay';
@@ -97,8 +96,7 @@ export default function App() {
             <Route path="branches" element={<BranchesPublicPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
-            <Route path="404" element={<NotFoundPage />} />
-            <Route path="*" element={<NotFoundPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
 
           {/* ---------------- Customer app ---------------- */}

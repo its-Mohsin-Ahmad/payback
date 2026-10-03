@@ -821,22 +821,22 @@ function SecurityStep({
       {/* PIN */}
       <div>
         <p className="mb-1.5 text-sm font-medium text-slate-700">Transaction PIN</p>
-        <div className="flex gap-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white font-mono text-lg font-bold text-slate-900">
-              {pin[i] ? '•' : ''}
-            </div>
-          ))}
-          <Input
-            aria-label="Transaction PIN"
-            className="sr-only"
-            inputMode="numeric"
-            maxLength={4}
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-          />
-        </div>
-        <p className="mt-1.5 text-xs text-slate-400">Used for in-app approvals. Four digits, never shown again after setup.</p>
+        {/* Interactive 4-digit PIN — tap a box or type straight away. */}
+        <OtpInput
+          length={4}
+          value={pin}
+          onChange={(next) => setPin(next.replace(/\D/g, '').slice(0, 4))}
+        />
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+          {pin.length === 4 ? (
+            <>
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" aria-hidden />
+              PIN set — you can change it later in Settings.
+            </>
+          ) : (
+            'Used for in-app approvals. Four digits, never shown again after setup.'
+          )}
+        </p>
       </div>
 
       {/* 2FA */}

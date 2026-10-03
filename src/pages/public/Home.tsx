@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { ContactlessGlyph, PaybackCard3D } from '@/components/card3d';
 import { AreaChart, DonutChart, GroupedBarChart } from '@/components/charts';
+import { ProviderLogo } from '@/components/logos';
 import { DemoBanner, SecurityBadge } from '@/components/ui';
 import { paybackCards } from '@/lib/cardData';
 
@@ -222,15 +223,28 @@ export default function HomePage() {
         {/* 3D card showcase */}
         <section className="rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 shadow-card sm:p-10">
           <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div className="flex justify-center">
-              <PaybackCard3D card={paybackCards[1]} size="lg" />
+            <div>
+              {/* Green, Platinum and Gold shown together */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {[
+                  { card: paybackCards[0], label: 'Green', hint: 'Everyday' },
+                  { card: paybackCards[1], label: 'Platinum', hint: 'Metal' },
+                  { card: paybackCards[2], label: 'Gold', hint: 'Signature' },
+                ].map((item) => (
+                  <div key={item.label} className="flex flex-col items-center gap-2">
+                    <PaybackCard3D card={item.card} size="sm" />
+                    <p className="text-sm font-bold text-slate-900">{item.label}</p>
+                    <p className="text-xs text-slate-500">{item.hint}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Meet Your PAYBACK Card.</h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                Six card identities — Everyday, Premium, Black, Virtual, Business and Travel. Flip any card to see the
-                magstripe, signature panel, secure element and verification code.
+                Three signature finishes — Green for everyday banking, Platinum metal and Gold for the highest tier. Flip
+                any card to see the magstripe, signature panel, secure element and verification code.
               </p>
 
               <ul className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -282,17 +296,17 @@ export default function HomePage() {
           <div className="relative mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {[
-                { name: 'PAYBACK', eta: 'Instant', fee: 'Free', tone: '#10B981', demo: false },
-                { name: 'Local Bank', eta: 'Within 24h', fee: 'From $0.50', tone: '#0F172A', demo: false },
-                { name: 'Easypaisa', eta: 'Demo Transfer', fee: 'Demo', tone: '#16A34A', demo: true },
-                { name: 'JazzCash', eta: 'Demo Transfer', fee: 'Demo', tone: '#DC2626', demo: true },
-                { name: 'UPaisa', eta: 'Demo Transfer', fee: 'Demo', tone: '#F97316', demo: true },
-                { name: 'NayaPay', eta: 'Demo Transfer', fee: 'Demo', tone: '#7C3AED', demo: true },
-                { name: 'International', eta: '1–3 days', fee: 'From $12', tone: '#0EA5E9', demo: false },
-                { name: 'PayPal', eta: 'Not connected', fee: 'Integration required', tone: '#1D4ED8', demo: true },
+                { name: 'PAYBACK', eta: 'Instant', fee: 'Free', demo: false },
+                { name: 'Local Bank', eta: 'Within 24h', fee: 'From $0.50', demo: false },
+                { name: 'Easypaisa', eta: 'Demo Transfer', fee: 'Demo', demo: true },
+                { name: 'JazzCash', eta: 'Demo Transfer', fee: 'Demo', demo: true },
+                { name: 'UPaisa', eta: 'Demo Transfer', fee: 'Demo', demo: true },
+                { name: 'NayaPay', eta: 'Demo Transfer', fee: 'Demo', demo: true },
+                { name: 'International', eta: '1–3 days', fee: 'From $12', demo: false },
+                { name: 'PayPal', eta: 'Not connected', fee: 'Integration required', demo: true },
               ].map((rail) => (
                 <div key={rail.name} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-card">
-                  <span className="block h-2 w-10 rounded-full" style={{ backgroundColor: rail.tone }} aria-hidden />
+                  <ProviderLogo mark={rail.name} tileClassName="h-10 w-10" />
                   <p className="mt-2.5 text-sm font-bold text-slate-900">{rail.name}</p>
                   <p className="text-xs text-slate-500">{rail.eta}</p>
                   <p className="mt-1 text-[11px] font-semibold text-slate-400">{rail.fee}</p>
