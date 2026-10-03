@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>PAYBACK</title>
+    <script>
+      /**
+       * GitHub Pages serves only static files, so a request for a client-side
+       * route (e.g. /payback/app/accounts) returns this page instead of the app.
+       * Remember the requested URL and bounce to the app root; src/main.tsx
+       * restores it before the router mounts.
+       */
+      (function () {
+        try {
+          var target = window.location.pathname + window.location.search + window.location.hash;
+          window.sessionStorage.setItem('payback:redirect', target);
+        } catch (error) {
+          /* storage blocked — fall through to the plain redirect */
+        }
+        window.location.replace('/payback/');
+      })();
+    </script>
+    <style>
+      body {
+        margin: 0;
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Redirecting to PAYBACK… <a style="color: #34d399" href="/payback/">click here</a> if nothing happens.</p>
+  </body>
+</html>

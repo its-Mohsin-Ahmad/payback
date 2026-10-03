@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface font-sans text-slate-700 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-slate-900;
+  }
+
+  /* Numeric alignment for financial figures */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  ::selection {
+    @apply bg-emerald-500/20;
+  }
+}
+
+@layer components {
+  .card-base {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-card;
+  }
+
+  .focus-ring {
+    @apply outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-emerald-500;
+  }
+
+  .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+  .sidebar-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .sidebar-scroll::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-500/30;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hero-grid {
+    background-image: radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.06) 1px, transparent 0);
+    background-size: 26px 26px;
+  }
+
+  .emerald-mesh {
+    background-color: #059669;
+    background-image: radial-gradient(at 20% 20%, rgba(16, 185, 129, 0.9) 0px, transparent 55%),
+      radial-gradient(at 85% 15%, rgba(5, 150, 105, 0.9) 0px, transparent 50%),
+      radial-gradient(at 75% 90%, rgba(20, 184, 166, 0.85) 0px, transparent 55%),
+      linear-gradient(135deg, #047857 0%, #059669 60%, #10b981 100%);
+  }
+
+  .navy-mesh {
+    background-color: #0f172a;
+    background-image: radial-gradient(at 90% 10%, rgba(16, 185, 129, 0.35) 0px, transparent 45%),
+      radial-gradient(at 10% 95%, rgba(56, 189, 248, 0.18) 0px, transparent 45%),
+      linear-gradient(160deg, #0f172a 0%, #111c33 100%);
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Accessible reduced-motion handling */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print-friendly receipts & statements */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .print-area {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
