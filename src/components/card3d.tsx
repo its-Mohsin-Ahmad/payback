@@ -294,6 +294,7 @@ export function PaybackCard3D({
   showPan = false,
   className,
   onSideChange,
+  onActivate,
   flipLabel = true,
 }: {
   card: PaybackCard;
@@ -304,7 +305,10 @@ export function PaybackCard3D({
   /** Reveal the synthetic demo PAN (never a real credential). */
   showPan?: boolean;
   className?: string;
+  /** Reports which face is now showing. Observation only — never selection. */
   onSideChange?: (side: CardSide) => void;
+  /** Fired whenever the card is activated (click, Enter or Space). */
+  onActivate?: () => void;
   flipLabel?: boolean;
 }) {
   const cfg = SIZES[size];
@@ -314,13 +318,19 @@ export function PaybackCard3D({
   const [shine, setShine] = useState({ x: 50, y: 28 });
   const wrap = useRef<HTMLDivElement>(null);
 
+  /**
+   * Flipping and selection are deliberately separate concerns: `onSideChange`
+   * only reports the new face, `onActivate` reports the intent to select. The
+   * carousel relies on this to centre a card without it needing to flip too.
+   */
   const flip = useCallback(() => {
     setSide((prev) => {
       const next: CardSide = prev === 'front' ? 'back' : 'front';
       onSideChange?.(next);
       return next;
     });
-  }, [onSideChange]);
+    onActivate?.();
+  }, [onSideChange, onActivate]);
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!interactive || reduced) return;
@@ -437,6 +447,13 @@ export function CardCarousel({
   const [index, setIndex] = useState(() => Math.max(0, cards.findIndex((c) => c.id === activeId)));
 
   /**
+   * Set while a programmatic smooth scroll is in flight. Scroll events fired by
+   * that animation pass through intermediate offsets; without this lock they
+   * would overwrite the index we are deliberately animating towards.
+   */
+  const animating = useRef(false);
+
+  /**
    * Scroll the track itself instead of using `scrollIntoView`, which also
    * scrolls ancestor containers and made the dot/arrow state drift out of sync
    * with the snap position.
@@ -447,19 +464,50 @@ export function CardCarousel({
     if (!el || !item) return;
     // Centre the card inside the track's own scrollport.
     const left = item.offsetLeft - (el.clientWidth - item.offsetWidth) / 2;
-    el.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' });
+    const next = Math.max(0, left);
+    if (!smooth) {
+      el.scrollTo({ left: next, behavior: 'auto' });
+      return;
+    }
+    animating.current = true;
+    el.scrollTo({ left: next, behavior: 'smooth' });
   };
 
   const emit = (next: number) => {
     const clamped = Math.max(0, Math.min(cards.length - 1, next));
+    if (clamped === index) {
+      // Already selected — still re-centre so a click always feels responsive.
+      scrollToIndex(clamped);
+      return;
+    }
     setIndex(clamped);
     onActiveChange?.(cards[clamped].id);
     scrollToIndex(clamped);
   };
 
+  /**
+   * Mirror an externally driven `activeId` back into the local index.
+   * Without this the carousel keeps rendering its own stale index, so a card
+   * selected by the parent stayed dimmed and off-centre.
+   */
+  useEffect(() => {
+    const next = cards.findIndex((c) => c.id === activeId);
+    if (next < 0 || next === index) return;
+    setIndex(next);
+    scrollToIndex(next, false);
+  }, [activeId]);
+
   const onScroll = () => {
     const el = trackRef.current;
     if (!el) return;
+    // Ignore the intermediate positions produced by our own smooth scroll.
+    if (animating.current) {
+      const item = el.children[index] as HTMLElement | undefined;
+      if (!item) return;
+      const desired = Math.max(0, item.offsetLeft - (el.clientWidth - item.offsetWidth) / 2);
+      if (Math.abs(el.scrollLeft - desired) <= 2) animating.current = false;
+      return;
+    }
     const center = el.scrollLeft + el.clientWidth / 2;
     let best = 0;
     let bestDist = Number.POSITIVE_INFINITY;
@@ -515,9 +563,9 @@ export function CardCarousel({
                 card={card}
                 size={size}
                 showPan={showPan}
-                onSideChange={() => {
-                  if (i !== index) onActiveChange?.(card.id);
-                }}
+                /* Selection is driven by activation, never by the flip. This
+                   updates `index`, reports the new active card and centres it. */
+                onActivate={() => emit(i)}
                 flipLabel={i === index}
               />
               <div className="mt-2 text-center">
