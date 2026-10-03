@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Receipt, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Receipt, ScanQrCode, Zap } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
 import {
   Alert,
@@ -24,6 +25,7 @@ import { formatDate, money } from '@/lib/utils';
 
 export default function BillPaymentsPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Bill[]>(seed);
   const [payTarget, setPayTarget] = useState<Bill | null>(null);
   const [amount, setAmount] = useState('');
@@ -61,9 +63,19 @@ export default function BillPaymentsPage() {
         title="Bill payments"
         description="Utilities, subscriptions and more — pay now or automate."
         actions={
-          <Button icon={<Plus className="h-4 w-4" aria-hidden />} onClick={() => toast.info('Demo', 'Add-biller onboarding is simulated in this prototype.')}>
-            Add biller
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<ScanQrCode className="h-4 w-4" aria-hidden />}
+              onClick={() => navigate('/app/scan')}
+            >
+              Scan bill
+            </Button>
+            <Button icon={<Plus className="h-4 w-4" aria-hidden />} onClick={() => toast.info('Demo', 'Add-biller onboarding is simulated in this prototype.')}>
+              Add biller
+            </Button>
+          </>
         }
       />
 

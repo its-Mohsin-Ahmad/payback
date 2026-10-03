@@ -20,6 +20,10 @@ import BranchesPublicPage from '@/pages/public/Branches';
 import NotFoundPage from '@/pages/public/NotFound';
 
 /* Customer app */
+import ScanPayPage from '@/pages/app/ScanPay';
+import MyQrPage from '@/pages/app/MyQr';
+import QrPayPage from '@/pages/app/QrPay';
+import VerifyTransactionPage from '@/pages/app/VerifyTransaction';
 import AppDashboardPage from '@/pages/app/Dashboard';
 import AccountsPage from '@/pages/app/Accounts';
 import AccountDetailPage from '@/pages/app/AccountDetail';
@@ -106,6 +110,10 @@ export default function App() {
             <Route path="transactions/:id" element={<TransactionDetailPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="transfer" element={<TransferPage />} />
+            <Route path="scan" element={<ScanPayPage />} />
+            <Route path="my-qr" element={<MyQrPage />} />
+            <Route path="qr-pay" element={<QrPayPage />} />
+            <Route path="verify" element={<VerifyTransactionPage />} />
             <Route path="bills" element={<BillPaymentsPage />} />
             <Route path="cards" element={<CardsPage />} />
             <Route path="beneficiaries" element={<BeneficiariesPage />} />

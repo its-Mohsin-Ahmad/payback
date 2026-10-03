@@ -46,6 +46,7 @@ import {
   useToast,
 } from '@/components/ui';
 import { PageWrap } from '@/components/blocks';
+import { QrCode as ReceiptQr } from '@/components/qr';
 import { Icon } from '@/components/Icon';
 import { PROVIDERS } from '@/data/products';
 import { accounts, quickRecipients, recipients as savedRecipients, transferLimits } from '@/data/mock';
@@ -1005,6 +1006,12 @@ export default function TransferPage() {
               { label: 'Timestamp', value: receipt ? new Date(receipt.at).toLocaleString('en-US') : '—' },
             ]}
           />
+          <div className="mt-4 flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <ReceiptQr value={`PAYBACK1:receipt:${receipt?.ref ?? 'PB-TX-00000'}`} size={140} label="Receipt QR code" />
+            <p className="text-center text-xs text-slate-500">
+              Scan this receipt to verify it later — the code carries only a safe reference.
+            </p>
+          </div>
         </div>
       </Modal>
     </PageWrap>

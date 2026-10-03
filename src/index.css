@@ -87,6 +87,182 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* 3D card mechanics */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* Card edge: a real card has thickness */
+  .pb-card-edge {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    transform: translateZ(-6px);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(15, 23, 42, 0.42));
+    filter: blur(0.4px);
+  }
+
+  /* Metallic EMV chip */
+  .pb-metal {
+    background-image: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 28%, #f1f5f9 46%, #94a3b8 62%, #e2e8f0 82%, #cbd5e1 100%);
+  }
+
+  /* Brushed / micro-pattern surface for premium plastics and metal */
+  .pb-brushed {
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 1px,
+      rgba(255, 255, 255, 0) 2px,
+      rgba(255, 255, 255, 0) 4px
+    );
+  }
+
+  .pb-micro {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+    background-size: 9px 9px;
+  }
+
+  /* Holographic security patch */
+  .pb-holo {
+    background-image: linear-gradient(
+        120deg,
+        rgba(56, 189, 248, 0.55) 0%,
+        rgba(167, 139, 250, 0.45) 22%,
+        rgba(16, 185, 129, 0.5) 44%,
+        rgba(251, 191, 36, 0.4) 66%,
+        rgba(56, 189, 248, 0.55) 100%
+      ),
+      radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent 60%);
+    background-size: 220% 220%, 100% 100%;
+  }
+
+  /* Soft contact shadow beneath a floating card */
+  .pb-contact-shadow {
+    box-shadow: 0 34px 60px -22px rgba(15, 23, 42, 0.55), 0 12px 24px -16px rgba(15, 23, 42, 0.35);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Premium motion                                                       */
+/* ------------------------------------------------------------------ */
+
+@keyframes pb-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(-0.6deg);
+  }
+}
+
+@keyframes pb-sheen {
+  0% {
+    transform: translateX(-130%) skewX(-18deg);
+    opacity: 0;
+  }
+  38% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translateX(130%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes pb-scan {
+  0% {
+    transform: translateY(-6%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(106%);
+    opacity: 0;
+  }
+}
+
+@keyframes pb-pulse-ring {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.65;
+  }
+  70% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pb-dash {
+  to {
+    stroke-dashoffset: -220;
+  }
+}
+
+@keyframes pb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pb-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-float {
+  animation: pb-float 7s ease-in-out infinite;
+}
+
+.animate-sheen {
+  animation: pb-sheen 4.5s ease-in-out infinite;
+}
+
+.animate-scan-line {
+  animation: pb-scan 2.6s ease-in-out infinite;
+}
+
+.animate-pulse-ring {
+  animation: pb-pulse-ring 2.8s ease-out infinite;
+}
+
+.animate-dash {
+  animation: pb-dash 3.4s linear infinite;
+}
+
+.animate-rise {
+  animation: pb-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-spin-slow {
+  animation: pb-spin-slow 14s linear infinite;
 }
 
 /* Accessible reduced-motion handling */

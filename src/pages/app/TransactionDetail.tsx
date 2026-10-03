@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Copy, Download, Flag, Share2 } from 'lucide-react';
+import { QrCode } from '@/components/qr';
 import {
   Alert,
   Badge,
@@ -128,6 +129,28 @@ export default function TransactionDetailPage() {
           </CardBody>
         </Card>
       </section>
+
+      <Card>
+        <CardHeader title="Receipt code" subtitle="A safe reference — never card or credential data" />
+        <CardBody className="flex flex-col items-center gap-4 sm:flex-row">
+          <div className="rounded-2xl border-4 border-white bg-white p-2 shadow-card">
+            <QrCode value={`PAYBACK1:receipt:${tx.reference}`} size={112} label="Receipt QR code" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-900">Verify this receipt anywhere</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+              Anyone can scan this code to check that <span className="font-mono">{tx.reference}</span> is a genuine PAYBACK
+              record and see the amount, date and status.
+            </p>
+            <Link
+              to="/app/verify"
+              className="focus-ring mt-3 inline-flex h-9 items-center rounded-lg border border-slate-300 px-3.5 text-xs font-semibold text-slate-700 transition-colors hover:border-emerald-300 hover:text-emerald-700"
+            >
+              Verify a transaction
+            </Link>
+          </div>
+        </CardBody>
+      </Card>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>

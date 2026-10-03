@@ -1,0 +1,524 @@
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { QrCode } from '@/components/qr';
+import { Badge } from '@/components/ui';
+import type { PaybackCard } from '@/lib/cardData';
+import { cn } from '@/lib/utils';
+
+export type CardSide = 'front' | 'back';
+export type CardSize = 'sm' | 'md' | 'lg';
+
+/** ISO/IEC 7810 ID-1 proportions (85.6 × 53.98 mm). */
+const ASPECT = 1.586;
+
+const SIZES: Record<CardSize, { width: number; pad: number; font: string; pan: string; holder: string }> = {
+  sm: { width: 248, pad: 14, font: 'text-[8px]', pan: 'text-[11px]', holder: 'text-[10px]' },
+  md: { width: 340, pad: 20, font: 'text-[9px]', pan: 'text-[14px]', holder: 'text-[12px]' },
+  lg: { width: 440, pad: 26, font: 'text-[10px]', pan: 'text-[18px]', holder: 'text-[14px]' },
+};
+
+/* ------------------------------------------------------------------ */
+/* Card faces                                                          */
+/* ------------------------------------------------------------------ */
+
+function CardSurface({
+  card,
+  size,
+  shine,
+  children,
+}: {
+  card: PaybackCard;
+  size: CardSize;
+  /** Pointer-driven specular highlight position (percentages). */
+  shine: { x: number; y: number };
+  children: ReactNode;
+}) {
+  const cfg = SIZES[size];
+  const finish = card.identity.finish;
+  return (
+    <div className="absolute inset-0 overflow-hidden rounded-2xl" style={{ backgroundImage: card.identity.base }}>
+      {finish === 'brushed' || finish === 'metal' ? <div className="pb-brushed absolute inset-0" aria-hidden /> : null}
+      <div className="pb-micro absolute inset-0 opacity-40" aria-hidden />
+      <div className="absolute inset-0" style={{ backgroundImage: card.identity.sheen, opacity: 0.5 }} aria-hidden />
+      <div
+        className="absolute inset-0"
+        style={{ background: `radial-gradient(420px circle at ${shine.x}% ${shine.y}%, rgba(255,255,255,0.32), transparent 62%)` }}
+        aria-hidden
+      />
+      <div
+        className="animate-sheen absolute inset-y-0 -left-1/3 w-1/3 skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/25 to-transparent"
+        aria-hidden
+      />
+      <div style={{ padding: cfg.pad }} className="relative flex h-full flex-col justify-between">
+        {children}
+      </div>
+      <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/20" aria-hidden />
+    </div>
+  );
+}
+
+/** Front — logo, chip, contactless, masked PAN, holder name, expiry, holo patch. */
+export function CardFront({
+  card,
+  size,
+  shine,
+  showPan,
+}: {
+  card: PaybackCard;
+  size: CardSize;
+  shine: { x: number; y: number };
+  showPan: boolean;
+}) {
+  const cfg = SIZES[size];
+  return (
+    <CardSurface card={card} size={size} shine={shine}>
+      <div className="flex items-start justify-between">
+        <Wordmark />
+        <ContactlessGlyph className="text-white/85" />
+      </div>
+
+      <div className="flex items-end justify-between">
+        <CardChip />
+        <NetworkMark label={card.identity.network} />
+      </div>
+
+      <div>
+        <div className={cn('tnum font-mono font-semibold tracking-[0.14em] text-white', cfg.pan)}>
+          {showPan ? card.demoPan : card.maskedPan}
+        </div>
+        <div className="mt-1.5 flex items-end justify-between">
+          <div>
+            <p className={cn('font-semibold uppercase tracking-[0.16em] text-white/55', cfg.font)}>Cardholder</p>
+            <p className={cn('font-semibold uppercase tracking-[0.1em] text-white', cfg.holder)}>{card.holder}</p>
+          </div>
+          <div className="text-right">
+            <p className={cn('font-semibold uppercase tracking-[0.16em] text-white/55', cfg.font)}>Valid thru</p>
+            <p className={cn('tnum font-mono font-semibold text-white', cfg.holder)}>{card.expiry}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="pb-holo pointer-events-none absolute right-[-16%] top-[16%] h-[50%] w-[40%] rotate-[18deg] rounded-2xl opacity-60" aria-hidden />
+      <span className="absolute bottom-1.5 right-3 text-[6px] font-bold uppercase tracking-[0.2em] text-white/40">Demo card</span>
+    </CardSurface>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Card furniture                                                      */
+/* ------------------------------------------------------------------ */
+
+/** Metallic EMV chip with contact lines and a specular highlight. */
+export function CardChip({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 46 34" className={cn('h-[34px] w-[46px]', className)} aria-label="EMV chip" role="img">
+      <defs>
+        <linearGradient id="pb-chip" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f8fafc" />
+          <stop offset="26%" stopColor="#cbd5e1" />
+          <stop offset="48%" stopColor="#f1f5f9" />
+          <stop offset="66%" stopColor="#94a3b8" />
+          <stop offset="100%" stopColor="#e2e8f0" />
+        </linearGradient>
+        <linearGradient id="pb-chip-glare" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="45%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <rect width="46" height="34" rx="5" fill="url(#pb-chip)" stroke="#94a3b8" strokeWidth="0.6" />
+      <g stroke="#64748b" strokeWidth="0.7" opacity="0.75">
+        <path d="M13 0v10M13 24v10M33 0v10M33 24v10M0 12h9M37 12h9M0 22h9M37 22h9" fill="none" />
+        <rect x="13" y="12" width="20" height="10" rx="2" fill="none" />
+      </g>
+      <rect width="46" height="34" rx="5" fill="url(#pb-chip-glare)" />
+    </svg>
+  );
+}
+
+/** Contactless payment glyph. */
+export function ContactlessGlyph({ className, stroke = 'currentColor' }: { className?: string; stroke?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn('h-5 w-5', className)} fill="none" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" aria-label="Contactless" role="img">
+      <path d="M8.5 7.5a8 8 0 0 1 0 9" />
+      <path d="M12 5.5a12 12 0 0 1 0 13" />
+      <path d="M15.5 3.5a16 16 0 0 1 0 17" />
+    </svg>
+  );
+}
+
+/** Demo network representation — configurable, no partnership implied. */
+export function NetworkMark({ label, className }: { label: string; className?: string }) {
+  return (
+    <span className={cn('inline-flex items-center rounded-md border border-white/25 px-1.5 py-0.5 text-[7px] font-bold tracking-[0.18em] text-white/80', className)}>
+      {label}
+    </span>
+  );
+}
+
+function Wordmark({ className }: { className?: string }) {
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 font-display text-[13px] font-extrabold tracking-tight text-white', className)}>
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+        <path d="M12 2.5 21 7.4v9.2L12 21.5 3 16.6V7.4L12 2.5Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M7.5 14.4 12 8.2l4.5 6.2" fill="none" stroke="#34d399" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      PAYBACK
+    </span>
+  );
+}
+
+/** Back — magstripe, signature panel, masked CVV, secure element, demo verify code. */
+export function CardBack({ card, size, shine }: { card: PaybackCard; size: CardSize; shine: { x: number; y: number } }) {
+  const cfg = SIZES[size];
+  return (
+    <CardSurface card={card} size={size} shine={shine}>
+      {/* Magnetic stripe with fine grooves */}
+      <div
+        className="absolute inset-x-0 top-0 h-[24%] bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 3px), linear-gradient(180deg,#0f172a,#1e293b 60%,#0f172a)',
+        }}
+        aria-hidden
+      />
+
+      <div className="mt-[26%] flex flex-1 items-end justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-2">
+          {/* Signature panel */}
+          <div className="rounded-lg bg-gradient-to-b from-white/95 to-slate-200/90 p-1.5">
+            <div className="h-5 rounded-md bg-[repeating-linear-gradient(90deg,rgba(100,116,139,0.4)_0px,rgba(100,116,139,0.4)_1px,transparent_1px,transparent_4px)]" />
+            <p className="mt-0.5 text-[6px] font-bold uppercase tracking-[0.18em] text-slate-500">Authorised signature</p>
+          </div>
+
+          {/* Masked CVV + support number — never exposed */}
+          <div className="flex gap-2">
+            <div className="rounded-lg bg-white/90 px-2 py-1">
+              <p className="text-[6px] font-bold uppercase tracking-[0.16em] text-slate-500">CVV</p>
+              <p className="tnum font-mono text-[11px] font-bold text-slate-800">•••</p>
+            </div>
+            <div className="rounded-lg bg-white/15 px-2 py-1">
+              <p className="text-[6px] font-bold uppercase tracking-[0.16em] text-white/50">Support</p>
+              <p className="tnum font-mono text-[10px] font-semibold text-white/85">+92 21 ••• 0100</p>
+            </div>
+          </div>
+
+          <p className="text-[6px] font-medium uppercase leading-tight tracking-[0.12em] text-white/45">
+            Property of PAYBACK (demonstration). No real funds or card network.
+          </p>
+        </div>
+
+        {/* Secure element module + demo verification code */}
+        <div className="flex shrink-0 flex-col items-center gap-1.5">
+          <div className="rounded-xl border border-white/20 bg-white/10 p-1.5">
+            <CardChip className="h-5 w-7" />
+          </div>
+          <p className="text-center text-[6px] font-bold uppercase leading-tight tracking-[0.12em] text-white/55">
+            {card.secureElement.present ? 'Secure element' : 'Tokenised'}
+          </p>
+          <div className="rounded-lg bg-white p-1">
+            <QrCode value={`PAYBACK1:card:${card.id}:${card.last4}`} size={size === 'lg' ? 44 : 34} label="Card verification code" />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Wordmark className="text-[10px] opacity-70" />
+        <span className="rounded-md border border-white/20 bg-white/10 px-1.5 py-0.5 text-[6px] font-bold uppercase tracking-[0.16em] text-white/70">
+          Demo
+        </span>
+      </div>
+      <span className="sr-only">Card back with masked security details. {cfg.font}</span>
+    </CardSurface>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Interactive 3D card                                                 */
+/* ------------------------------------------------------------------ */
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return reduced;
+}
+
+export function PaybackCard3D({
+  card,
+  size = 'md',
+  interactive = true,
+  float = false,
+  showPan = false,
+  className,
+  onSideChange,
+  flipLabel = true,
+}: {
+  card: PaybackCard;
+  size?: CardSize;
+  /** Enables tap/click/keyboard flipping and pointer tilt. */
+  interactive?: boolean;
+  float?: boolean;
+  /** Reveal the synthetic demo PAN (never a real credential). */
+  showPan?: boolean;
+  className?: string;
+  onSideChange?: (side: CardSide) => void;
+  flipLabel?: boolean;
+}) {
+  const cfg = SIZES[size];
+  const reduced = usePrefersReducedMotion();
+  const [side, setSide] = useState<CardSide>('front');
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
+  const [shine, setShine] = useState({ x: 50, y: 28 });
+  const wrap = useRef<HTMLDivElement>(null);
+
+  const flip = useCallback(() => {
+    setSide((prev) => {
+      const next: CardSide = prev === 'front' ? 'back' : 'front';
+      onSideChange?.(next);
+      return next;
+    });
+  }, [onSideChange]);
+
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!interactive || reduced) return;
+    const rect = wrap.current?.getBoundingClientRect();
+    if (!rect) return;
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    setShine({ x: px * 100, y: py * 100 });
+    setTilt({ rx: (0.5 - py) * 10, ry: (px - 0.5) * 12 });
+  };
+
+  const reset = () => setTilt({ rx: 0, ry: 0 });
+
+  const flipDeg = side === 'back' ? 180 : 0;
+  const transform = reduced
+    ? `rotateY(${flipDeg}deg)`
+    : `rotateX(${tilt.rx}deg) rotateY(${tilt.ry + flipDeg}deg)`;
+
+  return (
+    <div className={cn('select-none', className)} style={{ width: cfg.width }}>
+      <div className="relative" style={{ perspective: '1400px' }}>
+        {/* Contact shadow that shifts with the tilt */}
+        <div
+          className="pointer-events-none absolute inset-x-4 rounded-[24px] bg-slate-900/25 blur-xl"
+          style={{ transform: `translateY(${18 + tilt.rx * 1.6}px) scale(${1 - tilt.rx * 0.006})`, filter: 'blur(18px)' }}
+          aria-hidden
+        />
+
+        <div
+          ref={wrap}
+          role={interactive ? 'button' : undefined}
+          tabIndex={interactive ? 0 : undefined}
+          aria-label={interactive ? `${card.identity.name}, ${card.maskedPan}. Activate to ${side === 'front' ? 'view the back' : 'return to the front'}.` : undefined}
+          aria-pressed={interactive ? side === 'back' : undefined}
+          onClick={interactive ? flip : undefined}
+          onKeyDown={
+            interactive
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    flip();
+                  }
+                }
+              : undefined
+          }
+          onPointerMove={onPointerMove}
+          onPointerLeave={reset}
+          className={cn(
+            'preserve-3d relative w-full cursor-pointer rounded-2xl pb-contact-shadow transition-transform duration-500 ease-out motion-reduce:transition-none',
+            float && !reduced && 'animate-float'
+          )}
+          style={{ aspectRatio: String(ASPECT), transform }}
+        >
+          {/* Physical edge / thickness */}
+          <div className="pb-card-edge" aria-hidden />
+
+          {/* Front face */}
+          <div className="backface-hidden absolute inset-0">
+            <CardFront card={card} size={size} shine={shine} showPan={showPan} />
+          </div>
+
+          {/* Back face */}
+          <div
+            className="backface-hidden absolute inset-0"
+            style={{ transform: 'rotateY(180deg)' }}
+          >
+            <CardBack card={card} size={size} shine={shine} />
+          </div>
+
+          {/* Glass edge highlight */}
+          <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/15" aria-hidden />
+        </div>
+
+        {flipLabel && interactive ? (
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={flip}
+              className="focus-ring rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
+            >
+              {side === 'front' ? 'View back' : 'View front'}
+            </button>
+            <span className="text-[11px] text-slate-400">Tap the card to flip</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Carousel                                                            */
+/* ------------------------------------------------------------------ */
+
+export function CardCarousel({
+  cards,
+  activeId,
+  onActiveChange,
+  size = 'md',
+  showPan = false,
+  className,
+}: {
+  cards: PaybackCard[];
+  activeId?: string;
+  onActiveChange?: (id: string) => void;
+  size?: CardSize;
+  showPan?: boolean;
+  className?: string;
+}) {
+  const cfg = SIZES[size];
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(() => Math.max(0, cards.findIndex((c) => c.id === activeId)));
+
+  const emit = (next: number) => {
+    const clamped = Math.max(0, Math.min(cards.length - 1, next));
+    setIndex(clamped);
+    onActiveChange?.(cards[clamped].id);
+    const el = trackRef.current;
+    const item = el?.children[clamped] as HTMLElement | undefined;
+    item?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  };
+
+  const onScroll = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    const center = el.scrollLeft + el.clientWidth / 2;
+    let best = index;
+    let bestDist = Number.POSITIVE_INFINITY;
+    Array.from(el.children).forEach((child, i) => {
+      const item = child as HTMLElement;
+      const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+      const dist = Math.abs(itemCenter - center);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    });
+    if (best !== index) {
+      setIndex(best);
+      onActiveChange?.(cards[best].id);
+    }
+  };
+
+  return (
+    <div className={className}>
+      <div
+        ref={trackRef}
+        onScroll={onScroll}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            emit(index + 1);
+          }
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            emit(index - 1);
+          }
+        }}
+        tabIndex={0}
+        role="group"
+        aria-roledescription="carousel"
+        aria-label="PAYBACK cards"
+        className="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 focus:outline-none"
+      >
+        {cards.map((card, i) => {
+          const distance = Math.abs(i - index);
+          return (
+            <div
+              key={card.id}
+              className="snap-center shrink-0 transition-all duration-500 ease-out"
+              style={{
+                transform: `scale(${distance === 0 ? 1 : Math.max(0.82, 1 - distance * 0.07)})`,
+                opacity: distance === 0 ? 1 : Math.max(0.45, 1 - distance * 0.22),
+                filter: distance === 0 ? 'none' : 'saturate(0.7)',
+              }}
+            >
+              <PaybackCard3D
+                card={card}
+                size={size}
+                showPan={showPan}
+                onSideChange={() => {
+                  if (i !== index) onActiveChange?.(card.id);
+                }}
+                flipLabel={i === index}
+              />
+              <div className="mt-2 text-center">
+                <p className="text-sm font-bold text-slate-900">{card.identity.name}</p>
+                <p className="text-xs text-slate-500">{card.identity.tagline}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Controls */}
+      <div className="mt-2 flex items-center justify-center gap-4">
+        <button
+          type="button"
+          onClick={() => emit(index - 1)}
+          disabled={index === 0}
+          aria-label="Previous card"
+          className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40"
+        >
+          ‹
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          {cards.map((card, i) => (
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => emit(i)}
+              aria-label={`Show ${card.identity.name}`}
+              aria-current={i === index}
+              className={`focus-ring h-2 rounded-full transition-all duration-300 ${
+                i === index ? 'w-7 bg-emerald-500' : 'w-2 bg-slate-300 hover:bg-slate-400'
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => emit(index + 1)}
+          disabled={index === cards.length - 1}
+          aria-label="Next card"
+          className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40"
+        >
+          ›
+        </button>
+
+        <span className="tnum w-14 text-right text-xs font-semibold text-slate-500">
+          {String(index + 1).padStart(2, '0')} / {String(cards.length).padStart(2, '0')}
+        </span>
+      </div>
+
+      <p className="sr-only">Card width {cfg.width}px. Use left and right arrow keys to browse cards.</p>
+    </div>
+  );
+}

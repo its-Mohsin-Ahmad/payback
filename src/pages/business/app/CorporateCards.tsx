@@ -1,26 +1,31 @@
+import { useState } from 'react';
 import { Plus, Snowflake } from 'lucide-react';
-import { PageWrap, UtilisationBar } from '@/components/blocks';
+import { PageWrap } from '@/components/blocks';
+import { PaybackCard3D } from '@/components/card3d';
 import {
   Alert,
   Badge,
   Button,
   Card,
   CardBody,
-  CardHeader,
   DemoBanner,
   PageHeader,
+  ProgressBar,
   StatCard,
   useToast,
 } from '@/components/ui';
 import { corporateCards } from '@/data/enterprise';
+import { paybackCards } from '@/lib/cardData';
 import { money } from '@/lib/utils';
 
 export default function CorporateCardsPage() {
   const toast = useToast();
+  const [frozen, setFrozen] = useState<string[]>(
+    corporateCards.filter((c) => c.status === 'Frozen').map((c) => c.id)
+  );
 
   const totalLimit = corporateCards.reduce((s, c) => s + c.limit, 0);
   const totalSpent = corporateCards.reduce((s, c) => s + c.spent, 0);
-  const frozen = corporateCards.filter((c) => c.status === 'Frozen').length;
 
   return (
     <PageWrap>
@@ -39,44 +44,71 @@ export default function CorporateCardsPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Total monthly limit" value={money(totalLimit, 'USD', { decimals: false })} tone="#10B981" />
-        <StatCard label="Spent this cycle" value={money(totalSpent, 'USD', { decimals: false })} tone="#38BDF8" footer={`${Math.round((totalSpent / totalLimit) * 100)}% of limits`} />
-        <StatCard label="Frozen cards" value={String(frozen)} tone="#F59E0B" footer={`${corporateCards.length} cards issued`} />
+        <StatCard
+          label="Spent this cycle"
+          value={money(totalSpent, 'USD', { decimals: false })}
+          tone="#38BDF8"
+          footer={`${Math.round((totalSpent / totalLimit) * 100)}% of limits`}
+        />
+        <StatCard
+          label="Frozen cards"
+          value={String(frozen.length)}
+          tone="#F59E0B"
+          footer={`${corporateCards.length} cards issued`}
+        />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {corporateCards.map((card) => (
-          <Card key={card.id}>
-            <CardHeader
-              title={card.holder}
-              subtitle={card.label}
-              action={<Badge tone={card.status === 'Active' ? 'emerald' : 'amber'}>{card.status}</Badge>}
-            />
-            <CardBody className="space-y-4">
-              <UtilisationBar
-                label="Limit used"
-                used={card.spent}
-                max={card.limit}
-                tone={card.spent / card.limit > 0.85 ? '#F43F5E' : '#10B981'}
-              />
-              <div className="flex flex-wrap gap-2">
-                <Button
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        {corporateCards.map((card) => {
+          const isFrozen = frozen.includes(card.id);
+          const visual = paybackCards.find((c) => c.last4 === card.id.split('-')[1]) ?? paybackCards[2];
+          const pct = Math.round((card.spent / card.limit) * 100);
+          return (
+            <div key={card.id} className="space-y-3">
+              <div className="flex justify-center">
+                <PaybackCard3D
+                  card={{
+                    ...visual,
+                    holder: card.holder.toUpperCase(),
+                    status: isFrozen ? 'Frozen' : 'Active',
+                    spent: card.spent,
+                    limit: card.limit,
+                  }}
                   size="sm"
-                  variant={card.status === 'Frozen' ? 'primary' : 'danger'}
-                  icon={<Snowflake className="h-4 w-4" aria-hidden />}
-                  onClick={() => toast.warning(card.status === 'Frozen' ? 'Unfreeze simulated' : 'Freeze simulated', `${card.label} updated (demo).`)}
-                >
-                  {card.status === 'Frozen' ? 'Unfreeze' : 'Freeze'}
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => toast.info('Limits', 'Per-card limit editing is simulated.')}>
-                  Adjust limit
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => toast.info('Statement', 'Card statement opened (demo).')}>
-                  Statement
-                </Button>
+                  flipLabel={false}
+                />
               </div>
-            </CardBody>
-          </Card>
-        ))}
+              <Card>
+                <CardBody className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-bold text-slate-900">{card.holder}</p>
+                    <Badge tone={isFrozen ? 'amber' : 'emerald'}>{isFrozen ? 'Frozen' : 'Active'}</Badge>
+                  </div>
+                  <p className="tnum text-xs text-slate-500">
+                    {money(card.spent, 'USD', { decimals: false })} of {money(card.limit, 'USD', { decimals: false })} • {pct}%
+                  </p>
+                  <ProgressBar value={card.spent} max={card.limit} label={`${card.label} utilisation`} tone={pct > 85 ? '#F43F5E' : '#10B981'} />
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      variant={isFrozen ? 'primary' : 'danger'}
+                      icon={<Snowflake className="h-4 w-4" aria-hidden />}
+                      onClick={() => {
+                        setFrozen((prev) => (isFrozen ? prev.filter((id) => id !== card.id) : [...prev, card.id]));
+                        toast.warning(isFrozen ? 'Card unfrozen' : 'Card frozen', `${card.label} updated (demo).`);
+                      }}
+                    >
+                      {isFrozen ? 'Unfreeze' : 'Freeze'}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => toast.info('Receipts', `${card.label} receipts opened (demo).`)}>
+                      Receipts
+                    </Button>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
+          );
+        })}
       </div>
 
       <Alert tone="info" title="Spend policies">

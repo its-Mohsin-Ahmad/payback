@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Search } from 'lucide-react';
+import { Download, ScanQrCode, Search } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
 import {
   Button,
@@ -68,14 +68,24 @@ export default function TransactionsPage() {
         title="Transactions"
         description="Search, filter and export every movement across your accounts."
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<Download className="h-4 w-4" aria-hidden />}
-            onClick={() => toast.success('Export queued', 'A CSV of the current filters will be emailed to you (demo).')}
-          >
-            Export CSV
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<ScanQrCode className="h-4 w-4" aria-hidden />}
+              onClick={() => navigate('/app/verify')}
+            >
+              Scan receipt / code
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Download className="h-4 w-4" aria-hidden />}
+              onClick={() => toast.success('Export queued', 'A CSV of the current filters will be emailed to you (demo).')}
+            >
+              Export CSV
+            </Button>
+          </>
         }
       />
 

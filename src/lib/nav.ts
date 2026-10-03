@@ -48,8 +48,11 @@ export const appNav: NavGroup[] = [
     title: 'Move money',
     items: [
       { label: 'Money Transfer', to: '/app/transfer', icon: 'send', badge: 'New' },
+      { label: 'Scan & Pay', to: '/app/scan', icon: 'scan-qr' },
+      { label: 'My QR', to: '/app/my-qr', icon: 'qr-code' },
       { label: 'Bill Payments', to: '/app/bills', icon: 'receipt' },
       { label: 'Cards', to: '/app/cards', icon: 'credit-card' },
+      { label: 'Verify Transaction', to: '/app/verify', icon: 'shield-check' },
       { label: 'Beneficiaries', to: '/app/beneficiaries', icon: 'users' },
       { label: 'Limits', to: '/app/limits', icon: 'scale' },
     ],
@@ -120,7 +123,7 @@ export const businessNav: NavGroup[] = [
 export const bottomNav: NavItem[] = [
   { label: 'Home', to: '/app', icon: 'home', end: true },
   { label: 'Accounts', to: '/app/accounts', icon: 'wallet' },
-  { label: 'Transfer', to: '/app/transfer', icon: 'send' },
+  { label: 'Scan', to: '/app/scan', icon: 'scan-qr' },
   { label: 'Cards', to: '/app/cards', icon: 'credit-card' },
   { label: 'Profile', to: '/app/profile', icon: 'user' },
 ];
@@ -167,12 +170,12 @@ export const adminNav: NavGroup[] = [
 
 /** Quick-action grid used on the customer dashboard. */
 export const quickActions = [
-  { label: 'Send Money', to: '/app/transfer', icon: 'send', tone: '#10B981' },
+  { label: 'Transfer', to: '/app/transfer', icon: 'send', tone: '#10B981' },
+  { label: 'Scan & Pay', to: '/app/scan', icon: 'scan-qr', tone: '#0EA5E9' },
   { label: 'Pay Bills', to: '/app/bills', icon: 'receipt', tone: '#38BDF8' },
-  { label: 'Top Up', to: '/app/bills', icon: 'smartphone', tone: '#8B5CF6' },
-  { label: 'Exchange', to: '/app/exchange', icon: 'globe', tone: '#0EA5E9' },
-  { label: 'Rewards', to: '/app/rewards', icon: 'gift', tone: '#F59E0B' },
+  { label: 'My QR', to: '/app/my-qr', icon: 'qr-code', tone: '#8B5CF6' },
   { label: 'Cards', to: '/app/cards', icon: 'credit-card', tone: '#14B8A6' },
-  { label: 'Loans', to: '/app/loans', icon: 'hand-coins', tone: '#EC4899' },
-  { label: 'Invest', to: '/app/investments', icon: 'trending-up', tone: '#6366F1' },
+  { label: 'Add Money', to: '/app/bills', icon: 'smartphone', tone: '#F59E0B' },
+  { label: 'Verify', to: '/app/verify', icon: 'shield-check', tone: '#EC4899' },
+  { label: 'Rewards', to: '/app/rewards', icon: 'gift', tone: '#6366F1' },
 ];
