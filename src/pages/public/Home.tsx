@@ -223,30 +223,57 @@ export default function HomePage() {
         {/* 3D card showcase */}
         <section className="rounded-3xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-6 shadow-card sm:p-10">
           {/*
-            Green, Platinum and Gold get a full-width row of their own. Splitting
-            this section in two left the card column narrower than three cards
-            need, so each one was squeezed by `maxWidth: 100%` and rendered
-            smaller than its designed size.
+            Green, Platinum and Gold are fanned as an overlapping hand of cards
+            rather than sat in a grid with gaps between them.
 
-            Three `md` cards need ~1100px, which only fits once the section is
-            genuinely wide (lg and up). Below that they stack full width, where
-            `maxWidth: 100%` lets each card grow into the column instead of
-            being clipped.
+            Each card is pulled left by `--pb-fan-overlap`, and `z-index` rises
+            with position so the fan stacks left-over-right. Hovering promotes a
+            card above its neighbours — without that, the overlap means only the
+            last card is ever fully visible and the other two look clipped.
+
+            Labels sit *below* the fan instead of under each card, because an
+            overlapping card would otherwise cover the label of the one beneath.
           */}
-          <div className="grid grid-cols-1 items-start justify-items-center gap-8 sm:gap-10 lg:grid-cols-3 lg:gap-10">
-            {[
-              { card: paybackCards[0], label: 'Green', hint: 'Everyday' },
-              { card: paybackCards[1], label: 'Platinum', hint: 'Metal' },
-              { card: paybackCards[2], label: 'Gold', hint: 'Signature' },
-            ].map((item) => (
-              <div key={item.label} className="flex w-full min-w-0 flex-col items-center gap-2">
-                {/* `fill` makes the card stretch on narrow screens and settle at
-                    its designed 340px once the three-across row has room. */}
-                <PaybackCard3D card={item.card} size="md" fill className="w-full" />
-                <p className="text-sm font-bold text-slate-900">{item.label}</p>
-                <p className="text-xs text-slate-500">{item.hint}</p>
-              </div>
-            ))}
+          <div className="flex flex-col items-center">
+            <div className="pb-fan flex items-start justify-center">
+              {[
+                { card: paybackCards[0], label: 'Green', hint: 'Everyday' },
+                { card: paybackCards[1], label: 'Platinum', hint: 'Metal' },
+                { card: paybackCards[2], label: 'Gold', hint: 'Signature' },
+              ].map((item, i) => (
+                <div
+                  key={item.label}
+                  className="group relative transition-transform duration-500 ease-out hover:z-20 hover:-translate-y-4 focus-within:z-20 focus-within:-translate-y-4 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                  style={{ zIndex: i }}
+                >
+                  <PaybackCard3D
+                    card={item.card}
+                    size="md"
+                    fill={false}
+                    flipLabel={false}
+                    /* Width comes from the same variable the overlap uses, so the
+                       fan stays proportional at every breakpoint. The component
+                       sets an inline width, hence the `!` override. */
+                    className="!w-[var(--pb-fan-card)]"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Legend, in the same order as the fan so each name maps to the
+                card directly above it. */}
+            <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+              {[
+                { label: 'Green', hint: 'Everyday' },
+                { label: 'Platinum', hint: 'Metal' },
+                { label: 'Gold', hint: 'Signature' },
+              ].map((item) => (
+                <li key={item.label} className="text-center">
+                  <p className="text-sm font-bold text-slate-900">{item.label}</p>
+                  <p className="text-xs text-slate-500">{item.hint}</p>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="mt-12 grid items-center gap-10 border-t border-slate-200/80 pt-10 lg:grid-cols-2">

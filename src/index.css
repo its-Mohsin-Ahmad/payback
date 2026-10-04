@@ -433,7 +433,30 @@
   .pb-veil-out { animation: none !important; opacity: 0; }
 }
 
-.animate-float {
+/* Fanned card showcase.
+     The overlap is expressed against the same variable that sets the card
+     width, so the two can never drift apart as the breakpoints change — a
+     fixed pixel margin would look like a gap on one size and a pile on
+     another. */
+  .pb-fan {
+    --pb-fan-card: 248px;
+    --pb-fan-overlap: 96px;
+  }
+
+  .pb-fan > * + * {
+    margin-left: calc(var(--pb-fan-overlap) * -1);
+  }
+
+  /* Three 340px cards with a 116px bite read as a fan; any less and the
+     section needs more width than it is given. */
+  @media (min-width: 1280px) {
+    .pb-fan {
+      --pb-fan-card: 340px;
+      --pb-fan-overlap: 116px;
+    }
+  }
+
+  .animate-float {
   animation: pb-float 7s ease-in-out infinite;
 }
 
