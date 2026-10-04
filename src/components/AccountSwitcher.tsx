@@ -1,8 +1,9 @@
-import { Building2, Check, ChevronDown, User } from 'lucide-react';
+import { Building2, Check, ChevronDown, Plus, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/session/SessionProvider';
-import { businessesFor, displayName, hasBusiness } from '@/lib/session/selectors';
+import { activeBusiness, businessesFor, displayName, hasBusiness } from '@/lib/session/selectors';
+import { BusinessLogo } from '@/components/BusinessLogo';
 
 /**
  * Personal ⇄ Business switcher (spec §22, §36, §37, §51, §52).
@@ -13,11 +14,13 @@ import { businessesFor, displayName, hasBusiness } from '@/lib/session/selectors
  * always one tap from changing.
  */
 export function AccountSwitcher() {
-  const { session, setMode } = useSession();
+  const { session, setMode, setActiveBusiness } = useSession();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
-  const business = businessesFor(session)[0];
+  // Every business the signed-in user owns (spec §22).
+  const businesses = businessesFor(session);
+  const business = activeBusiness(session);
   const canSwitch = hasBusiness(session);
   const isBusiness = session.mode === 'business';
 
@@ -109,23 +112,52 @@ export function AccountSwitcher() {
             {!isBusiness ? <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden /> : null}
           </button>
 
+          {/*
+            One row per owned business (spec §22). Switching sets the active
+            business *and* the banking mode together, so the entire business
+            context — accounts, cards, team, invoices — follows the selection
+            (§23).
+          */}
+          {businesses.map((b) => {
+            const selected = isBusiness && b.id === business?.id;
+            return (
+              <button
+                key={b.id}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  setActiveBusiness(b.id);
+                  setOpen(false);
+                  navigate('/business/app');
+                }}
+                className="focus-ring flex w-full items-center gap-3 border-t border-slate-100 px-3.5 py-3 text-left transition-colors hover:bg-slate-50"
+              >
+                <BusinessLogo business={b} size="sm" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-slate-900">{b.name}</span>
+                  <span className="block truncate text-xs text-slate-500">
+                    {b.userRole} · {b.industry}
+                  </span>
+                </span>
+                {selected ? <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden /> : null}
+              </button>
+            );
+          })}
+
+          {/* Create/join another business (spec §23). */}
           <button
             type="button"
-            role="option"
-            aria-selected={isBusiness}
-            onClick={() => go('business')}
-            className="focus-ring flex w-full items-center gap-3 border-t border-slate-100 px-3.5 py-3 text-left transition-colors hover:bg-slate-50"
+            onClick={() => {
+              setOpen(false);
+              navigate('/business/app/profile?new=1');
+            }}
+            className="focus-ring flex w-full items-center gap-3 border-t border-slate-100 px-3.5 py-3 text-left text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white">
-              <Building2 className="h-4 w-4" aria-hidden />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-dashed border-slate-300">
+              <Plus className="h-4 w-4" aria-hidden />
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold text-slate-900">{business?.name}</span>
-              <span className="block truncate text-xs text-slate-500">
-                {business?.userRole} · {businessCount} account(s)
-              </span>
-            </span>
-            {isBusiness ? <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden /> : null}
+            <span className="text-sm font-semibold">Create or join a business</span>
           </button>
         </div>
       ) : null}

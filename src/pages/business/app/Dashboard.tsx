@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Building2, Clock, TrendingUp } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
 import { GroupedBarChart } from '@/components/charts';
@@ -10,6 +10,7 @@ import {
   CardBody,
   CardHeader,
   DemoBanner,
+  EmptyState,
   PageHeader,
   SectionTitle,
   StatCard,
@@ -18,13 +19,38 @@ import {
   approvals,
   businessAccounts,
   businessMetrics,
-  businessProfile,
   cashflowSeries,
   invoices,
 } from '@/data/enterprise';
+import { useSession } from '@/lib/session/SessionProvider';
+import { activeBusiness, displayName, greeting } from '@/lib/session/selectors';
 import { money } from '@/lib/utils';
 
 export default function BusinessDashboardPage() {
+  // Company identity resolves from the session, so switching business changes
+  // this whole page (§14, §23).
+  const { session } = useSession();
+  const navigate = useNavigate();
+  const user = session.user;
+  const biz = activeBusiness(session);
+
+  /**
+   * A user with no business profile has no business dashboard to show. Handled
+   * explicitly rather than with `?? '…'` at each usage, so a missing business can
+   * never render as a half-blank page full of placeholder company names (§27).
+   */
+  if (!biz) {
+    return (
+      <PageWrap>
+        <EmptyState
+          icon={<Building2 className="h-6 w-6" aria-hidden />}
+          title="No business profile yet"
+          description="Create a business to unlock business banking, cards and team tools."
+          action={<Button onClick={() => navigate('/business/app/profile')}>Set up a business</Button>}
+        />
+      </PageWrap>
+    );
+  }
   const dueInvoices = invoices.filter((i) => i.status === 'Overdue' || i.status === 'Sent').slice(0, 4);
   const pendingApprovals = approvals.filter((a) => a.status === 'Pending');
 
@@ -32,12 +58,14 @@ export default function BusinessDashboardPage() {
     <PageWrap>
       <PageHeader
         eyebrow="Business banking"
-        title={`Welcome back, ${businessProfile.primaryContact.split(' ')[0]}`}
-        description={`${businessProfile.name} • ${businessProfile.role} view`}
+        /* Greeting uses the signed-in user; the company line uses the active
+           business. Both are derived, never stored (§14, §27). */
+        title={`${greeting()}, ${displayName(user)}`}
+        description={`${biz.name} • ${biz.userRole} view`}
         actions={
           <>
             <Badge tone="sky" icon={<Building2 className="h-3 w-3" aria-hidden />}>
-              {businessProfile.industry}
+              {biz.industry}
             </Badge>
             <Link
               to="/business/app/approvals"
@@ -185,7 +213,7 @@ export default function BusinessDashboardPage() {
       </section>
 
       <p className="pb-2 text-center text-xs text-slate-400">
-        Business banking prototype for {businessProfile.legalName} — all figures synthetic.
+        Business banking prototype for {biz.legalName} — all figures synthetic.
       </p>
     </PageWrap>
   );

@@ -102,21 +102,51 @@ export interface UserAccount {
   interest: string;
 }
 
+/** Roles a user may hold within a business (spec §24). */
+export type BusinessRole = 'Owner' | 'Administrator' | 'Finance Manager' | 'Accountant' | 'Employee' | 'Viewer';
+
+/**
+ * Roles permitted to edit the business profile.
+ *
+ * An Employee or Viewer must not be able to rename the company or change its
+ * registration details — that is a profile-editing permission, not a cosmetic
+ * one (spec §24).
+ */
+export const PROFILE_EDIT_ROLES: BusinessRole[] = ['Owner', 'Administrator'];
+
+/** A business owned by, or belonging to, the signed-in user (spec §3). */
 export interface BusinessProfile {
+  /** Unique business id. */
   id: string;
-  userId: string;
+  /** The user who created/owns this business — the relationship in §2, §28. */
+  ownerUserId: string;
   name: string;
+  legalName: string;
   type: string;
-  registrationNumber: string;
   industry: string;
-  address: string;
-  phone: string;
+  registrationNumber: string;
+  taxNumber: string;
   email: string;
+  phone: string;
   website: string;
-  employees: number;
-  /** The owner's role in this business (§29). */
-  userRole: string;
-  taxId: string;
+  address: string;
+  city: string;
+  country: string;
+  postalCode: string;
+  /**
+   * Uploaded business logo.
+   *
+   * Deliberately separate from `UserProfile.photoUrl`: a personal photo must not
+   * stand in for a company logo unless the owner explicitly sets it (§25).
+   */
+  logoUrl: string;
+  employeeCount: number;
+  accountStatus: 'Active' | 'Pending review' | 'Suspended';
+  /** The signed-in user's role within this business (spec §24). */
+  userRole: BusinessRole;
+  memberSince: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserNotification {
@@ -141,6 +171,8 @@ export interface Session {
   notifications: UserNotification[];
   /** Active banking context (spec §22, §36). */
   mode: BankingMode;
+  /** Which of the user's businesses is in context, for multi-business owners (§22, §23). */
+  activeBusinessId: string;
   /** Drives the personalised first-run onboarding screen (spec §50). */
   isNewUser: boolean;
   /** True while viewing synthetic data (spec §48). */

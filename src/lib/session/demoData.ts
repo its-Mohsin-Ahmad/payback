@@ -1,4 +1,81 @@
-import type { BusinessProfile, Session, UserCard } from './types';
+﻿import type { BusinessProfile, Session, UserCard } from './types';
+
+/** Two synthetic businesses for one owner, so multi-business switching is real (§22). */
+const AHMED_BUSINESSES: BusinessProfile[] = [
+  {
+    id: 'biz-ahmed',
+    ownerUserId: 'usr-ahmed',
+    name: 'Nova Digital Solutions',
+    legalName: 'Nova Digital Solutions (Pvt) Ltd',
+    type: 'Private Limited',
+    industry: 'Technology & Software',
+    registrationNumber: 'SECP-2019-44821',
+    taxNumber: 'NT-4482103-6',
+    email: 'info@novadigital.example',
+    phone: '+92 51 2345 678',
+    website: 'novadigital.example',
+    address: '14 Bahria Enclave, Phase 5',
+    city: 'Islamabad',
+    country: 'Pakistan',
+    postalCode: '44000',
+    logoUrl: '',
+    employeeCount: 24,
+    accountStatus: 'Active',
+    userRole: 'Owner',
+    memberSince: '2019-04-02',
+    createdAt: '2019-04-02T09:00:00Z',
+    updatedAt: '2026-02-11T10:00:00Z',
+  },
+  {
+    id: 'biz-ahmed-2',
+    ownerUserId: 'usr-ahmed',
+    name: 'Green Valley Traders',
+    legalName: 'Green Valley Traders',
+    type: 'Sole Proprietorship',
+    industry: 'Agriculture & Trading',
+    registrationNumber: 'SECP-2023-71190',
+    taxNumber: 'GV-7119004-1',
+    email: 'accounts@greenvalley.example',
+    phone: '+92 48 3220 118',
+    website: 'greenvalley.example',
+    address: '7 Cantt Market',
+    city: 'Multan',
+    country: 'Pakistan',
+    postalCode: '60000',
+    logoUrl: '',
+    employeeCount: 8,
+    accountStatus: 'Active',
+    userRole: 'Owner',
+    memberSince: '2023-08-15',
+    createdAt: '2023-08-15T09:00:00Z',
+    updatedAt: '2026-01-22T10:00:00Z',
+  },
+];
+
+const SANA_BUSINESS: BusinessProfile = {
+  id: 'biz-sana',
+  ownerUserId: 'usr-sana',
+  name: 'Crescent Retail Co.',
+  legalName: 'Crescent Retail Company',
+  type: 'Sole Proprietorship',
+  industry: 'Retail',
+  registrationNumber: 'SECP-2021-90233',
+  taxNumber: 'CR-9023311-2',
+  email: 'accounts@crescentretail.example',
+  phone: '+92 21 3455 8890',
+  website: 'crescentretail.example',
+  address: '8 Zamzama Boulevard',
+  city: 'Karachi',
+  country: 'Pakistan',
+  postalCode: '75500',
+  logoUrl: '',
+  employeeCount: 11,
+  accountStatus: 'Active',
+  userRole: 'Administrator',
+  memberSince: '2024-06-02',
+  createdAt: '2024-06-02T09:00:00Z',
+  updatedAt: '2025-12-01T10:00:00Z',
+};
 
 /**
  * Synthetic demo identities (spec §48).
@@ -46,37 +123,6 @@ export function buildCard(
   };
 }
 
-export const AHMED_BUSINESS: BusinessProfile = {
-  id: 'biz-ahmed',
-  userId: 'usr-ahmed',
-  name: 'Northwind Technologies',
-  type: 'Private Limited',
-  registrationNumber: 'SECP-2019-44821',
-  industry: 'Software & Technology',
-  address: '14 Gulberg Avenue, Lahore, Pakistan',
-  phone: '+92 42 3577 1200',
-  email: 'finance@northwind.example',
-  website: 'northwind.example',
-  employees: 24,
-  userRole: 'Owner',
-  taxId: 'NT-4482103-6',
-};
-
-export const SANA_BUSINESS: BusinessProfile = {
-  id: 'biz-sana',
-  userId: 'usr-sana',
-  name: 'Crescent Retail Co.',
-  type: 'Sole Proprietorship',
-  registrationNumber: 'SECP-2021-90233',
-  industry: 'Retail',
-  address: '8 Zamzama Boulevard, Karachi, Pakistan',
-  phone: '+92 21 3455 8890',
-  email: 'accounts@crescentretail.example',
-  website: 'crescentretail.example',
-  employees: 11,
-  userRole: 'Administrator',
-  taxId: 'CR-9023311-2',
-};
 
 /** The session a visitor lands in — a signed-in demo customer with both contexts. */
 export const DEFAULT_SESSION: Session = {
@@ -198,7 +244,8 @@ export const DEFAULT_SESSION: Session = {
       limit: 900_000,
     }),
   ],
-  businesses: [AHMED_BUSINESS],
+  businesses: AHMED_BUSINESSES,
+  activeBusinessId: 'biz-ahmed',
   notifications: [
     {
       id: 'n-1',
@@ -270,5 +317,6 @@ export const ALT_SESSION: Session = {
     }),
   ],
   businesses: [SANA_BUSINESS],
+  activeBusinessId: 'biz-sana',
   notifications: [],
 };

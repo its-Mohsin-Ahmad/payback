@@ -1,4 +1,4 @@
-import type { Session, UserAccount, UserProfile } from './types';
+import { PROFILE_EDIT_ROLES, type BusinessProfile, type Session, type UserAccount, type UserProfile } from './types';
 
 /**
  * Derived display values.
@@ -117,10 +117,60 @@ export function totalBalance(session: Session) {
 
 /** True when the user holds at least one business profile (spec §21, §52). */
 export function hasBusiness(session: Session) {
-  return session.businesses.some((b) => b.userId === session.user.id);
+  return session.businesses.some((b) => b.ownerUserId === session.user.id);
 }
 
 /** Business profiles owned by the signed-in user (spec §28). */
 export function businessesFor(session: Session) {
-  return session.businesses.filter((b) => b.userId === session.user.id);
+  return session.businesses.filter((b) => b.ownerUserId === session.user.id);
+}
+
+/**
+ * The business currently in context.
+ *
+ * Falls back to the first owned business so the business shell always has a
+ * subject. Every business page reads this rather than a constant (§14, §27).
+ */
+export function activeBusiness(session: Session): BusinessProfile | undefined {
+  const owned = businessesFor(session);
+  if (!owned.length) return undefined;
+  return owned.find((b) => b.id === session.activeBusinessId) ?? owned[0];
+}
+
+/** Whether the signed-in user may edit the business profile (spec §24). */
+export function canEditBusiness(business: BusinessProfile | undefined): boolean {
+  return !!business && PROFILE_EDIT_ROLES.includes(business.userRole);
+}
+
+/**
+ * Initials for the business logo fallback (spec §5).
+ *
+ * Derived from the business name and, critically, *not* from the owner's name:
+ * "Nova Digital Solutions" must render ND, never AK. Leading filler words are
+ * skipped so "The Green Valley Traders" reads GVT rather than TGV.
+ */
+export function businessInitials(name: string) {
+  const words = name
+    .replace(/\b(the|and|of|pvt|ltd|limited|inc|llc|co)\b/gi, ' ')
+    .split(/[\s,&]+/)
+    .map((w) => w.replace(/[^A-Za-z0-9]/g, ''))
+    .filter(Boolean);
+  if (!words.length) return 'PB';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+}
+
+/** One-line business address assembled from its parts (spec §9). */
+export function businessAddress(business: BusinessProfile) {
+  return [business.address, business.city, business.postalCode, business.country].filter(Boolean).join(', ');
+}
+
+/**
+ * Name as it appears on a business card.
+ *
+ * Uppercased for the embossed face (spec §16), and derived from the live profile
+ * so a rename propagates to every card at once (§11).
+ */
+export function businessCardName(business: BusinessProfile) {
+  return business.name.trim().toUpperCase();
 }

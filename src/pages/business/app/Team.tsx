@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
 import {
@@ -20,10 +20,13 @@ import {
   Tr,
   useToast,
 } from '@/components/ui';
-import { businessProfile, teamMembers } from '@/data/enterprise';
+import { teamMembers } from '@/data/enterprise';
+import { useSession } from '@/lib/session/SessionProvider';
+import { activeBusiness } from '@/lib/session/selectors';
 
 export default function BusinessTeamPage() {
   const toast = useToast();
+  const { session } = useSession();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -48,7 +51,13 @@ export default function BusinessTeamPage() {
       <DemoBanner label="Demo team" text="Members and emails are synthetic — invitations are not actually sent." />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Active members" value={String(active)} tone="#10B981" footer={`${businessProfile.employees} employees in total`} />
+        <StatCard
+          label="Active members"
+          value={String(active)}
+          tone="#10B981"
+          /* Headcount comes from the active business, not the legacy demo company (§27). */
+          footer={`${activeBusiness(session)?.employeeCount ?? active} employees in total`}
+        />
         <StatCard label="Pending invites" value={String(invited)} tone="#F59E0B" />
         <StatCard label="Approvers" value={String(teamMembers.filter((m) => m.permission === 'Approver' || m.permission === 'Administrator').length)} tone="#38BDF8" footer="Required for dual control" />
       </div>

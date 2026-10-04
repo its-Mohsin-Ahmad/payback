@@ -1,6 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+﻿import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ALT_SESSION, DEFAULT_SESSION, buildCard } from './demoData';
-import type { BankingMode, CardVariantKey, Session, UserCard, UserPreferences, UserProfile } from './types';
+import type { BankingMode, BusinessProfile, CardVariantKey, Session, UserCard, UserPreferences, UserProfile } from './types';
 
 const STORAGE_KEY = 'payback:session:v1';
 
@@ -10,6 +10,12 @@ interface SessionApi {
   updateProfile: (patch: Partial<UserProfile>) => void;
   updatePreferences: (patch: Partial<UserPreferences>) => void;
   setMode: (mode: BankingMode) => void;
+  /** Switch the active business (spec §22, §23). */
+  setActiveBusiness: (businessId: string) => void;
+  /** Patch a business profile — permission-checked by the caller (spec §10, §11). */
+  updateBusiness: (businessId: string, patch: Partial<BusinessProfile>) => void;
+  /** Create a new business for the signed-in user and make it active (spec §23). */
+  addBusiness: (draft: { name: string; type: string; industry: string; email: string; phone: string; address: string; city: string; country: string }) => void;
   /** Change one card's settings and persist immediately (spec §14, §15). */
   updateCard: (cardId: string, patch: Partial<UserCard>) => void;
   /** Choose the card design; persists for this user (spec §13). */
@@ -65,6 +71,69 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setSession((prev) => ({ ...prev, mode }));
   }, []);
 
+  /**
+   * Switch the business in context (spec §22, §23).
+   *
+   * Also flips the banking mode into `business`, so choosing a business from the
+   * switcher lands the user in business banking rather than leaving the mode
+   * inconsistent with what they just picked.
+   */
+  const setActiveBusiness = useCallback((businessId: string) => {
+    setSession((prev) => ({ ...prev, activeBusinessId: businessId, mode: 'business' }));
+  }, []);
+
+  /**
+   * Patch a business profile (spec §10, §11).
+   *
+   * Writes through to the single session record, which is why a rename appears
+   * on the dashboard, cards, invoices and reports simultaneously — no page needs
+   * its own copy of the business name to update.
+   */
+  const updateBusiness = useCallback((businessId: string, patch: Partial<BusinessProfile>) => {
+    setSession((prev) => ({
+      ...prev,
+      businesses: prev.businesses.map((b) =>
+        b.id === businessId ? { ...b, ...patch, updatedAt: new Date().toISOString() } : b,
+      ),
+    }));
+  }, []);
+
+  const addBusiness = useCallback(
+    (draft: { name: string; type: string; industry: string; email: string; phone: string; address: string; city: string; country: string }) => {
+      setSession((prev) => {
+        const now = new Date().toISOString();
+        const id = `${prev.user.id}-biz-${Date.now().toString(36)}`;
+        const created: BusinessProfile = {
+          id,
+          ownerUserId: prev.user.id,
+          name: draft.name.trim(),
+          legalName: draft.name.trim(),
+          type: draft.type,
+          industry: draft.industry || draft.type,
+          registrationNumber: 'Pending verification',
+          taxNumber: 'Pending verification',
+          email: draft.email || prev.user.email,
+          phone: draft.phone || prev.user.phone,
+          website: '',
+          address: draft.address,
+          city: draft.city,
+          country: draft.country,
+          postalCode: '',
+          logoUrl: '',
+          employeeCount: 1,
+          accountStatus: 'Pending review',
+          // Whoever creates a business owns it (spec §7).
+          userRole: 'Owner',
+          memberSince: now.slice(0, 10),
+          createdAt: now,
+          updatedAt: now,
+        };
+        return { ...prev, businesses: [...prev.businesses, created], activeBusinessId: id, mode: 'business' };
+      });
+    },
+    [],
+  );
+
   const updateCard = useCallback((cardId: string, patch: Partial<UserCard>) => {
     setSession((prev) => ({
       ...prev,
@@ -110,6 +179,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updatePreferences,
       setMode,
+      setActiveBusiness,
+      updateBusiness,
+      addBusiness,
       updateCard,
       selectCardVariant,
       markNotificationsRead,
@@ -121,6 +193,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       updateProfile,
       updatePreferences,
       setMode,
+      setActiveBusiness,
+      updateBusiness,
+      addBusiness,
       updateCard,
       selectCardVariant,
       markNotificationsRead,
@@ -275,22 +350,41 @@ export function sessionFromSignup(input: {
     }),
   ];
 
+  const createdAt = now.toISOString();
+
+  /**
+   * The business created at signup (spec §1, §26).
+   *
+   * This is the record the entire Business Banking context reads from. Note that
+   * the *individual* name lives on the user's profile, not here — a business and
+   * the person who owns it are separate entities (spec §2, §25).
+   */
   const businesses: Session['businesses'] = wantsBusiness
     ? [
         {
           id: `${id}-biz`,
-          userId: id,
+          // §3 — the owner relationship is explicit, not inferred.
+          ownerUserId: id,
           name: input.businessName?.trim() || `${full} Trading`,
+          legalName: input.businessName?.trim() || `${full} Trading`,
           type: input.businessType?.trim() || 'Sole Proprietorship',
+          industry: input.businessType?.trim() || 'Not provided',
           registrationNumber: 'Pending verification',
-          industry: 'Not provided',
-          address: [input.address, input.city, input.country].filter(Boolean).join(', '),
-          phone: input.phone,
+          taxNumber: 'Pending verification',
           email: input.email,
+          phone: input.phone,
           website: '',
-          employees: 1,
+          address: input.address,
+          city: input.city,
+          country: input.country,
+          postalCode: input.postal,
+          logoUrl: '',
+          employeeCount: 1,
+          accountStatus: 'Pending review',
           userRole: 'Owner',
-          taxId: 'Pending verification',
+          memberSince: createdAt.slice(0, 10),
+          createdAt,
+          updatedAt: createdAt,
         },
       ]
     : [];
@@ -300,6 +394,7 @@ export function sessionFromSignup(input: {
     mode: wantsBusiness ? 'business' : 'personal',
     // Drives the personalised welcome screen on first entry (spec §50).
     isNewUser: true,
+    activeBusinessId: businesses[0]?.id ?? '',
     user,
     preferences: {
       language: 'English',

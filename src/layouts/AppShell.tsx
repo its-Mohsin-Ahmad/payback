@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Bell, Building2, LogOut, Menu, MessageSquare, Search } from 'lucide-react';
 import { Brand } from '@/components/Brand';
@@ -6,10 +6,9 @@ import { Icon } from '@/components/Icon';
 import { Avatar, Badge, useToast } from '@/components/ui';
 import { appNav, bottomNav, businessBottomNav, businessNav, type NavItem, type NavGroup } from '@/lib/nav';
 import { cn } from '@/lib/utils';
-import { businessProfile } from '@/data/enterprise';
 import { AccountSwitcher } from '@/components/AccountSwitcher';
 import { useSession, DemoUserSwitcher } from '@/lib/session/SessionProvider';
-import { businessesFor, displayName, fullName } from '@/lib/session/selectors';
+import { activeBusiness, businessesFor, displayName, fullName } from '@/lib/session/selectors';
 
 function NavSection({ group, onNavigate }: { group: NavGroup; onNavigate?: () => void }) {
   return (
@@ -51,10 +50,10 @@ function SidebarContent({ variant, onNavigate }: { variant: 'personal' | 'busine
   const groups = variant === 'business' ? businessNav : appNav;
   // Identity comes from the session, so the sidebar can never contradict the
   // profile page (spec §57).
-  const name = variant === 'business' ? businessesFor(session)[0]?.name ?? businessProfile.name : fullName(session.user);
+  const name = variant === 'business' ? activeBusiness(session)?.name ?? 'Your business' : fullName(session.user);
   const role =
     variant === 'business'
-      ? businessesFor(session)[0]?.userRole ?? businessProfile.role
+      ? activeBusiness(session)?.userRole ?? 'Member'
       : session.user.tier;
 
   return (
@@ -181,7 +180,7 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
               <p className="hidden truncate text-xs text-slate-500 sm:block">
                 {/* Name comes from the session, never a constant (spec §6). In the
                     business context it names the business, not the customer. */}
-                {variant === 'business' ? businessProfile.name : `Welcome back, ${displayName(user)}`}
+                {variant === 'business' ? activeBusiness(session)?.name ?? 'Your business' : `Welcome back, ${displayName(user)}`}
               </p>
             </div>
 
@@ -227,14 +226,14 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
                 aria-haspopup="menu"
                 aria-expanded={userMenu}
               >
-                <Avatar name={variant === 'business' ? businessProfile.name : fullName(user)} size="sm" color={variant === 'business' ? '#38BDF8' : '#0F172A'} />
+                <Avatar name={variant === 'business' ? activeBusiness(session)?.name ?? 'Your business' : fullName(user)} size="sm" color={variant === 'business' ? '#38BDF8' : '#0F172A'} />
                 <span className="hidden text-left lg:block">
                   <span className="block text-xs font-semibold text-slate-900">
                     {/* First name derived from the live profile (spec §6). */}
-                    {variant === 'business' ? businessProfile.name.split(' ')[0] : displayName(user)}
+                    {variant === 'business' ? (activeBusiness(session)?.name.split(' ')[0] ?? 'Business') : displayName(user)}
                   </span>
                   <span className="block text-[11px] text-slate-500">
-                    {variant === 'business' ? businessesFor(session)[0]?.userRole ?? 'Business' : user.tier}
+                    {variant === 'business' ? (activeBusiness(session)?.userRole ?? 'Business') : user.tier}
                   </span>
                 </span>
               </button>
@@ -243,10 +242,10 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
                 <div role="menu" className="animate-fade-in absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lift">
                   <div className="border-b border-slate-100 px-4 py-3">
                     <p className="truncate text-sm font-semibold text-slate-900">
-                      {variant === 'business' ? businessesFor(session)[0]?.name ?? businessProfile.name : fullName(user)}
+                      {variant === 'business' ? activeBusiness(session)?.name ?? 'Your business' : fullName(user)}
                     </p>
                     <p className="truncate text-xs text-slate-500">
-                      {variant === 'business' ? (businessesFor(session)[0]?.email ?? businessProfile.primaryContact) : user.email}
+                      {variant === 'business' ? (activeBusiness(session)?.email ?? user.email) : user.email}
                     </p>
                     <Badge tone="emerald" className="mt-2">
                       {variant === 'business' ? 'Business banking' : user.tier}
