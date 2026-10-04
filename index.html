@@ -15,6 +15,28 @@
       rel="stylesheet"
     />
     <title>PAYBACK — Banking Built Around You.</title>
+  <!--
+      Apply the saved theme before first paint (spec §89, §162).
+      Doing this from React would flash a white screen on every dark-mode load.
+      This must stay inline and blocking — deferring it, or moving it into the
+      bundle, reintroduces exactly the flash it exists to prevent.
+    -->
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('payback:session:v1');
+          var theme = raw ? (JSON.parse(raw).preferences || {}).theme : null;
+          var dark =
+            theme === 'dark' ||
+            ((!theme || theme === 'system') &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (error) {
+          /* storage blocked — fall back to light, which is the safe default */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -49,6 +49,31 @@ function loadSession(): Session {
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session>(loadSession);
 
+  /**
+   * Keep the `.dark` class on <html> in step with the saved preference
+   * (spec §89, §162).
+   *
+   * This is the runtime half of the theme; `index.html` holds the pre-paint half
+   * so a dark-mode load never flashes white. The system query is subscribed to
+   * only while the preference is `system`, so a user who explicitly picked light
+   * is not overridden by their OS flipping at sunset.
+   */
+  useEffect(() => {
+    const root = document.documentElement;
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const apply = () => {
+      const pref = session.preferences.theme;
+      const dark = pref === 'dark' || (pref === 'system' && query.matches);
+      root.classList.toggle('dark', dark);
+    };
+
+    apply();
+    if (session.preferences.theme !== 'system') return;
+    query.addEventListener('change', apply);
+    return () => query.removeEventListener('change', apply);
+  }, [session.preferences.theme]);
+
   // Persist on every change so a card toggle survives navigating away and back
   // (spec §15) and a reload (spec §16).
   useEffect(() => {

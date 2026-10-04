@@ -164,7 +164,7 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* `safe-top` clears the notch/Dynamic Island (spec §06). */}
-        <header className="no-print safe-top sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+        <header className="no-print safe-top sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-700/70 dark:bg-night/90">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
             <button
               type="button"
@@ -318,7 +318,7 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
                (spec §111) and labels wrap rather than truncate when the OS text
                size is raised (spec §135). */
           <nav
-            className="no-print safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md lg:hidden"
+            className="no-print safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md dark:border-slate-700 dark:bg-night/95 lg:hidden"
             aria-label="Bottom"
           >
             <ul className="grid grid-cols-5">

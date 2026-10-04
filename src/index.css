@@ -18,6 +18,49 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /*
+   * Dark mode (spec §89, §162, §206).
+   *
+   * The `.dark` class is placed on <html> by a blocking script in index.html
+   * *before* first paint, and kept in sync by `useTheme()`. Applying it from
+   * React alone would show a white flash on every load, which is worse than
+   * having no dark mode at all.
+   *
+   * These rules re-point the app's *semantic* surface classes rather than
+   * individual Tailwind palette utilities. `card-base` alone is used by every
+   * `Card` in the product, so theming it here flips the whole application rather
+   * than a hand-picked subset.
+   */
+  :root.dark {
+    color-scheme: dark;
+    --pb-nav-h: 3.5rem;
+  }
+
+  :root.dark body {
+    @apply bg-night text-slate-300;
+  }
+
+  :root.dark .card-base {
+    @apply border-slate-700/80 bg-night-card shadow-none;
+  }
+
+  :root.dark .focus-ring {
+    @apply ring-offset-night;
+  }
+
+  /* Surfaces that sit directly on the page background rather than in a Card. */
+  :root.dark .pb-surface {
+    @apply border-slate-700/80 bg-night-card;
+  }
+
+  /* Inputs and selects keep their own border; without this they read as
+     transparent holes on a dark panel. */
+  :root.dark input,
+  :root.dark select,
+  :root.dark textarea {
+    @apply border-slate-700 bg-slate-900/60 text-slate-100 placeholder:text-slate-500;
+  }
+
   body {
     @apply bg-surface font-sans text-slate-700 antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';

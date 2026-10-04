@@ -1,6 +1,7 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Moon, Save, Sun } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   Alert,
   Button,
@@ -48,6 +49,9 @@ export default function SettingsPage() {
         <Card>
           <CardHeader title="Appearance & language" />
           <CardBody className="space-y-4">
+            {/* Real theme control — writes to the session, so it persists and is
+                honoured by the pre-paint script on the next load (spec §66, §89). */}
+            <ThemeToggle />
             <Select
               label="Language"
               value={language}
