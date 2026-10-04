@@ -14,6 +14,80 @@
     --pb-nav-h: 3.5rem;
   }
 
+  /*
+   * Every table becomes a card list on a phone (spec §94, §182, §200).
+   *
+   * Applied centrally to `.pb-table` rather than per page, so all nineteen tables
+   * in the product — personal, business and admin — are covered by this one
+   * rule and none of them can be forgotten.
+   *
+   * `TableWrap` stamps each cell with its column header as `data-label`; CSS has
+   * no way to read a `<th>`, so that pairing is what makes this possible.
+   * A cell with an empty label was hidden at this breakpoint and is dropped
+   * rather than rendered as an unlabelled orphan row.
+   */
+  @media (max-width: 767px) {
+    .pb-table,
+    .pb-table tbody,
+    .pb-table tr,
+    .pb-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .pb-table thead {
+      /* Header labels are reproduced per-cell below. */
+      display: none;
+    }
+
+    .pb-table tr {
+      border: 1px solid rgb(226 232 240);
+      border-radius: 16px;
+      background: #fff;
+      padding: 4px 0;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+    }
+
+    .pb-table tr:last-child {
+      margin-bottom: 0;
+    }
+
+    .pb-table td {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      border: 0;
+      padding: 8px 14px;
+      /* Desktop alignment utilities would otherwise win. */
+      text-align: right;
+    }
+
+    .pb-table td::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    /* No label means the column was hidden at this width. */
+    .pb-table td[data-label=''] {
+      display: none;
+    }
+
+    :root.dark .pb-table tr {
+      border-color: rgb(51 65 85);
+      background: rgb(30 41 59);
+    }
+
+    :root.dark .pb-table td::before {
+      color: rgb(148 163 184);
+    }
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }

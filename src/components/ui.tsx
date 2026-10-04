@@ -1,6 +1,9 @@
 import {
+  Children,
+  cloneElement,
   createContext,
   Fragment,
+  isValidElement,
   useCallback,
   useContext,
   useEffect,
@@ -1213,11 +1216,20 @@ export function PageHeader({
     <header className={cn('flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between', className)}>
       <div className="min-w-0">
         {eyebrow ? <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">{eyebrow}</p> : null}
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
-        {description ? <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{description}</p> : null}
+        {/* 28px on a phone, scaling up to 30px — spec §7 asks for 30–40px on
+            mobile rather than the 24px this used to use. */}
+        <h1 className="mt-1 text-[1.75rem] font-bold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+          {title}
+        </h1>
+        {description ? <p className="mt-1.5 max-w-2xl text-pretty text-sm text-slate-500">{description}</p> : null}
         {children}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {/* `flex-col` makes the actions stretch to full width on a phone, which is
+          how a thumb reaches them (spec §21, §133); `xs:flex-row` restores
+          auto-width buttons from 400px up. */}
+      {actions ? (
+        <div className="flex w-full flex-col gap-2 xs:w-auto xs:flex-row xs:flex-wrap xs:items-center">{actions}</div>
+      ) : null}
     </header>
   );
 }
@@ -1397,10 +1409,85 @@ export function Timeline({
 /* Table & pagination                                                  */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/* Tables                                                              */
+/* ------------------------------------------------------------------ */
+
+/** Flatten a header cell's children down to a plain string for `data-label`. */
+function headerText(node: ReactNode): string {
+  if (node === null || node === undefined || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(headerText).join('');
+  if (isValidElement(node)) return headerText((node.props as { children?: ReactNode }).children);
+  return '';
+}
+
+/** Collect `<Th>` labels from the `<thead>` of a table subtree, in column order. */
+function collectHeaders(node: ReactNode): string[] {
+  const out: string[] = [];
+  Children.forEach(node, (section) => {
+    if (!isValidElement(section) || section.type !== 'thead') return;
+    Children.forEach((section.props as { children?: ReactNode }).children, (row) => {
+      const cells = isValidElement(row) ? (row.props as { children?: ReactNode }).children : null;
+      Children.forEach(cells, (cell) => {
+        if (isValidElement(cell)) out.push(headerText(cell.props.children));
+      });
+    });
+  });
+  return out;
+}
+
+/**
+ * Stamp every `<Td>` with its column header as `data-label`.
+ *
+ * This is what makes the responsive card transformation possible without
+ * rewriting nineteen pages by hand (spec §94, §182). Pure CSS can lay the table
+ * out as blocks on a phone, but only if each cell knows what it *is* — CSS has
+ * no way to read the matching `<th>`. Doing that plumbing here, once, means every
+ * existing table in the product becomes a card list on mobile for free.
+ *
+ * Cells are matched by position within their row, which mirrors how a real table
+ * is read. A cell whose column was hidden at this breakpoint (`hidden
+ * lg:table-cell`) gets no label, so it is dropped in the mobile layout rather
+ * than appearing as an unlabelled orphan.
+ */
+function labelCells(node: ReactNode, labels: string[]): ReactNode {
+  return Children.map(node, (child) => {
+    if (!isValidElement(child)) return child;
+    const props = child.props as { children?: ReactNode; className?: string };
+    const element = child as React.ReactElement<Record<string, unknown>>;
+
+    // A row restarts the column count — `colSpan` cells still occupy one slot.
+    if (child.type === 'tr' && props.children) {
+      let column = 0;
+      const cells = Children.map(props.children, (cell) => {
+        if (!isValidElement(cell)) return cell;
+        if (cell.type !== 'td') return cell;
+        const at = column;
+        column += 1;
+        const cellProps = cell.props as { className?: string };
+        const hidden = /(?:^|\s)(?:hidden|.*:(?:table-)?cell)/.test(cellProps.className ?? '');
+        const responsiveHidden = /\b(?:hidden|md:hidden|lg:hidden|xl:hidden)\b/.test(cellProps.className ?? '');
+        return cloneElement(cell as React.ReactElement<Record<string, unknown>>, {
+          'data-label': hidden || responsiveHidden ? '' : (labels[at] ?? ''),
+        });
+      });
+      return cloneElement(element, {}, cells);
+    }
+
+    if (props.children) {
+      return cloneElement(element, {}, labelCells(props.children, labels));
+    }
+    return child;
+  });
+}
+
 export function TableWrap({ children, className }: { children: ReactNode; className?: string }) {
+  const headers = collectHeaders(children);
   return (
+    /* `pb-table` is the hook the mobile card transformation keys off. */
     <div className={cn('sidebar-scroll -mx-px overflow-x-auto', className)}>
-      <table className="w-full border-collapse text-left text-sm">{children}</table>
+      <table className="pb-table w-full border-collapse text-left text-sm">{labelCells(children, headers)}</table>
     </div>
   );
 }
