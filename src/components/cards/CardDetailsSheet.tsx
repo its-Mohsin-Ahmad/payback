@@ -1,6 +1,6 @@
-import { PaybackCard3D } from '@/components/card3d';
+﻿import { PaybackCard3D } from '@/components/card3d';
 import { Alert, Badge, Button, Modal } from '@/components/ui';
-import { CARD_PILLARS, limitLabel, type CardVariant } from './cardVariants';
+import { CARD_PILLARS, limitLabel, type ResolvedCardVariant } from './cardVariants';
 
 /**
  * Card details (spec §25).
@@ -19,7 +19,7 @@ export function CardDetailsSheet({
 }: {
   open: boolean;
   onClose: () => void;
-  variant: CardVariant;
+  variant: ResolvedCardVariant;
   onOrder: () => void;
 }) {
   const { card } = variant;

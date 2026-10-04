@@ -144,13 +144,35 @@ export function useUser() {
   return useSession().session.user;
 }
 
-/** Switch between the two bundled demo identities (spec §47). */
-export function useDemoUserSwitch() {
+/**
+ * Sign in as a different customer (spec §10, §11).
+ *
+ * This is the acceptance test made clickable: switching identity must change the
+ * embossed cardholder name everywhere at once — profile, dashboard, cards,
+ * accounts — with nothing stale left behind. The previous user's data is
+ * replaced wholesale rather than merged, which is what guarantees none of it
+ * survives into the new session.
+ */
+export function DemoUserSwitcher() {
   const { session, replaceSession } = useSession();
-  return {
-    isAlt: session.user.id === 'usr-sana',
-    toggle: () => replaceSession(session.user.id === 'usr-sana' ? DEFAULT_SESSION : ALT_SESSION),
-  };
+  const isAlt = session.user.id === 'usr-sana';
+
+  return (
+    <div className="inline-flex items-center gap-2">
+      <label htmlFor="demo-user-switch" className="text-xs font-medium text-slate-500">
+        Signed in as
+      </label>
+      <select
+        id="demo-user-switch"
+        value={isAlt ? 'usr-sana' : 'usr-ahmed'}
+        onChange={(e) => replaceSession(e.target.value === 'usr-sana' ? ALT_SESSION : DEFAULT_SESSION)}
+        className="focus-ring min-h-[40px] rounded-xl border border-slate-200 bg-white px-2.5 text-sm font-semibold text-slate-800"
+      >
+        <option value="usr-ahmed">{DEFAULT_SESSION.user.firstName} {DEFAULT_SESSION.user.lastName}</option>
+        <option value="usr-sana">{ALT_SESSION.user.firstName} {ALT_SESSION.user.lastName}</option>
+      </select>
+    </div>
+  );
 }
 
 export function sessionFromSignup(input: {

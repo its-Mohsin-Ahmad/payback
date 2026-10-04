@@ -8,7 +8,7 @@ import { appNav, bottomNav, businessBottomNav, businessNav, type NavItem, type N
 import { cn } from '@/lib/utils';
 import { businessProfile } from '@/data/enterprise';
 import { AccountSwitcher } from '@/components/AccountSwitcher';
-import { useSession } from '@/lib/session/SessionProvider';
+import { useSession, DemoUserSwitcher } from '@/lib/session/SessionProvider';
 import { businessesFor, displayName, fullName } from '@/lib/session/selectors';
 
 function NavSection({ group, onNavigate }: { group: NavGroup; onNavigate?: () => void }) {
@@ -270,6 +270,11 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
                     ))}
                   </div>
                   <div className="border-t border-slate-100 p-1.5">
+                    {/* Switching customer proves the cardholder name is dynamic
+                        rather than baked in (spec §10, §11). */}
+                    <div className="px-3 pb-2 pt-1">
+                      <DemoUserSwitcher />
+                    </div>
                     <Link to="/login" className="focus-ring flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50">
                       <LogOut className="h-4 w-4" aria-hidden />
                       Sign out

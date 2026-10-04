@@ -1,4 +1,4 @@
-import { CARD_VARIANTS } from './cardVariants';
+﻿import type { ResolvedCardVariant } from './cardVariants';
 import { cn } from '@/lib/utils';
 
 /**
@@ -14,9 +14,12 @@ import { cn } from '@/lib/utils';
 export function CardSelector({
   index,
   onIndexChange,
+  variants,
 }: {
   index: number;
   onIndexChange: (next: number) => void;
+  /** Resolved against the signed-in user (spec §3). */
+  variants: ResolvedCardVariant[];
 }) {
   return (
     <div
@@ -24,7 +27,7 @@ export function CardSelector({
       aria-label="Choose a card design"
       className="grid-tight -mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid-cols-3 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden"
     >
-      {CARD_VARIANTS.map((v, i) => {
+      {variants.map((v, i) => {
         const active = i === index;
         return (
           <button

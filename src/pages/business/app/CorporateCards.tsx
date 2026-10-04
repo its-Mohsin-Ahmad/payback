@@ -15,11 +15,16 @@ import {
   useToast,
 } from '@/components/ui';
 import { corporateCards } from '@/data/enterprise';
-import { paybackCards } from '@/lib/cardData';
+import { useDemoCards } from '@/components/cards/cardVariants';
 import { money } from '@/lib/utils';
 
 export default function CorporateCardsPage() {
   const toast = useToast();
+  // Card *visuals* (gradient, chip, network mark) come from the session-stamped
+  // demo set. The holder line is kept per-card from the team roster below,
+  // because each of those cards belongs to a different authorised person — that
+  // is the point of corporate card issuance (spec §4).
+  const demoCards = useDemoCards();
   const [frozen, setFrozen] = useState<string[]>(
     corporateCards.filter((c) => c.status === 'Frozen').map((c) => c.id)
   );
@@ -61,7 +66,7 @@ export default function CorporateCardsPage() {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {corporateCards.map((card) => {
           const isFrozen = frozen.includes(card.id);
-          const visual = paybackCards.find((c) => c.last4 === card.id.split('-')[1]) ?? paybackCards[2];
+          const visual = demoCards.find((c) => c.last4 === card.id.split('-')[1]) ?? demoCards[2];
           const pct = Math.round((card.spent / card.limit) * 100);
           return (
             <div key={card.id} className="space-y-3">

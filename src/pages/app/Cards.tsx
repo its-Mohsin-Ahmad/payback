@@ -34,7 +34,8 @@ import {
   Toggle,
   useToast,
 } from '@/components/ui';
-import { cardUtilisation, paybackCards, secureSim, type PaybackCard } from '@/lib/cardData';
+import { cardUtilisation, secureSim, type PaybackCard } from '@/lib/cardData';
+import { useDemoCards } from '@/components/cards/cardVariants';
 import { useBoundedLoader } from '@/components/loaders';
 import { money } from '@/lib/utils';
 
@@ -44,8 +45,12 @@ export default function CardsPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const [cards, setCards] = useState<PaybackCard[]>(paybackCards);
-  const [activeId, setActiveId] = useState(paybackCards[0].id);
+  // The operational card list is also stamped with the signed-in cardholder's
+  // name, so the mini-cards in the list below the showcase match the large card
+  // above it (spec §3, §16).
+  const demoCards = useDemoCards();
+  const [cards, setCards] = useState<PaybackCard[]>(demoCards);
+  const [activeId, setActiveId] = useState(demoCards[0].id);
   const [showPan, setShowPan] = useState(false);
   const [auth, setAuth] = useState<AuthAction>(null);
   const [otp, setOtp] = useState('');

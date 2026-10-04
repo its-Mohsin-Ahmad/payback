@@ -1,4 +1,4 @@
-/**
+﻿/**
  * The three showcase variants and their demo positioning.
  *
  * Colours and surfaces are not repeated here — each variant reuses the
@@ -11,8 +11,9 @@
  */
 
 import { useMemo } from 'react';
-import { CARD_IDENTITIES, paybackCards, type CardIdentity, type PaybackCard } from '@/lib/cardData';
+import { CARD_IDENTITIES, demoCardsFor, type CardIdentity, type PaybackCard } from '@/lib/cardData';
 import { useSession } from '@/lib/session/SessionProvider';
+import { cardholderName } from '@/lib/session/selectors';
 import type { UserCard } from '@/lib/session/types';
 
 /**
@@ -72,8 +73,14 @@ export interface CardVariant {
   /** Compact name for the selector chips — "Gold". */
   shortLabel: string;
   description: string;
-  /** The underlying card identity rendered by the 3D surface. */
-  card: PaybackCard;
+  /**
+   * Populated by `useCardVariants()` for the signed-in user.
+   *
+   * Optional on the static template because a module-level constant cannot know
+   * who is signed in — resolving it here is what stops any card from ever
+   * carrying someone else's name (§2, §12).
+   */
+  card?: PaybackCard;
   /** Benefits listed in the information panel (spec §19). */
   benefits: string[];
   /** Fee block (spec §20). Clearly marked as demo configuration. */
@@ -82,15 +89,11 @@ export interface CardVariant {
   features: { contactless: boolean; online: boolean; international: boolean; atm: boolean };
 }
 
-/**
- * The demo cards that back each variant.
- *
- * Falls back to the first card so the showcase still renders if a card is ever
- * removed from the seed data, rather than throwing during render.
- */
-function cardById(id: string): PaybackCard {
-  return paybackCards.find((c) => c.id === id) ?? paybackCards[0];
-}
+/** A variant with its card resolved against the signed-in user. */
+export type ResolvedCardVariant = CardVariant & { card: PaybackCard };
+
+/** Demo seed cards backing the Green / Silver / Gold variants, in that order. */
+const DEMO_IDS = ['card-1', 'card-2', 'card-3'] as const;
 
 export const CARD_VARIANTS: CardVariant[] = [
   {
@@ -98,7 +101,6 @@ export const CARD_VARIANTS: CardVariant[] = [
     label: 'PAYBACK Green',
     shortLabel: 'Green',
     description: 'Everyday banking with premium control and security.',
-    card: cardById('card-1'),
     benefits: [
       'Premium card design',
       'Advanced card controls',
@@ -114,7 +116,6 @@ export const CARD_VARIANTS: CardVariant[] = [
     label: 'PAYBACK Silver',
     shortLabel: 'Silver',
     description: 'Elevated everyday banking with additional benefits.',
-    card: cardById('card-2'),
     benefits: [
       'Premium metal card design',
       'Advanced card controls',
@@ -131,7 +132,6 @@ export const CARD_VARIANTS: CardVariant[] = [
     label: 'PAYBACK Gold',
     shortLabel: 'Gold',
     description: 'Premium banking designed for elevated experiences.',
-    card: cardById('card-3'),
     benefits: [
       'Premium metal card design',
       'Advanced card controls',
@@ -181,33 +181,47 @@ export function limitLabel(card: PaybackCard) {
 }
 
 /**
+ * The six demo cards, stamped with the signed-in cardholder's name.
+ *
+ * Memoised on the user's name so every surface that calls this shares one array
+ * and the name propagates everywhere at once (spec §5, §7, §17).
+ */
+export function useDemoCards(): PaybackCard[] {
+  const { session } = useSession();
+  return useMemo(() => demoCardsFor(cardholderName(session.user)), [session.user]);
+}
+
+/**
  * The three showcase variants, resolved against the signed-in user.
  *
  * Where the session owns a card of that variant, that card is used — so the
  * cardholder name, masked number, status and limits are all the real ones
- * (spec §10, §14). Variants the user does not own fall back to the curated
- * demo card so the showcase still presents all three designs rather than
- * collapsing to a single card.
+ * (spec §10, §14). Variants the user does not own fall back to a demo card
+ * stamped with the *same* holder name, so a preview never shows someone else's
+ * identity.
  */
-export function useCardVariants(): CardVariant[] {
+export function useCardVariants(): ResolvedCardVariant[] {
   const { session } = useSession();
-  return useMemo(
-    () =>
-      CARD_VARIANTS.map((variant) => {
-        const owned = session.cards.find((c) => c.variant === variant.key);
-        if (!owned) return variant;
-        return {
-          ...variant,
-          card: toPaybackCard(owned),
-          // Availability is the user's actual configuration (spec §14, §15).
-          features: {
-            contactless: owned.contactless,
-            online: owned.online,
-            international: owned.international,
-            atm: owned.atm,
-          },
-        };
-      }),
-    [session.cards],
-  );
+  // Demo cards already carry the live holder name, so an unowned variant still
+  // previews as *this user's* card rather than someone else's (spec §3, §6).
+  const demo = useDemoCards();
+  return useMemo(() => {
+    const cardById = (id: string) => demo.find((c) => c.id === id) ?? demo[0];
+    return CARD_VARIANTS.map((variant, i) => {
+      const owned = session.cards.find((c) => c.variant === variant.key);
+      const base = { ...variant, card: cardById(DEMO_IDS[i]) };
+      if (!owned) return base;
+      return {
+        ...base,
+        card: toPaybackCard(owned),
+        // Availability is the user's actual configuration (spec §14, §15).
+        features: {
+          contactless: owned.contactless,
+          online: owned.online,
+          international: owned.international,
+          atm: owned.atm,
+        },
+      };
+    });
+  }, [session.cards, demo]);
 }

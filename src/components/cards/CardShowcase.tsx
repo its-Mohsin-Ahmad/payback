@@ -1,7 +1,7 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+﻿import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import { PaybackCard3D } from '@/components/card3d';
-import { CARD_VARIANTS } from './cardVariants';
+import type { ResolvedCardVariant } from './cardVariants';
 import { cn } from '@/lib/utils';
 
 /**
@@ -19,11 +19,20 @@ import { cn } from '@/lib/utils';
 export function CardShowcase({
   index,
   onIndexChange,
+  variants,
 }: {
   index: number;
   onIndexChange: (next: number) => void;
+  /**
+   * Resolved against the signed-in user by the parent.
+   *
+   * The showcase deliberately does *not* read the static `CARD_VARIANTS` list
+   * itself — doing so is what previously let it render a card embossed with a
+   * hardcoded name regardless of who was signed in (spec §2, §6, §17).
+   */
+  variants: ResolvedCardVariant[];
 }) {
-  const variant = CARD_VARIANTS[index];
+  const variant = variants[index];
   const [flipped, setFlipped] = useState(false);
 
   /**
@@ -37,7 +46,7 @@ export function CardShowcase({
   const go = useCallback(
     (next: number) => {
       // Wraps around: a carousel that dead-ends on the last card feels broken.
-      const wrapped = ((next % CARD_VARIANTS.length) + CARD_VARIANTS.length) % CARD_VARIANTS.length;
+      const wrapped = ((next % variants.length) + variants.length) % variants.length;
       onIndexChange(wrapped);
       // Always return to the front, so selecting a new card never lands the user
       // on the back of a card they have not read yet.
@@ -173,7 +182,7 @@ export function CardShowcase({
         </button>
 
         <div className="flex items-center gap-1.5" role="tablist" aria-label="Choose a card">
-          {CARD_VARIANTS.map((v, i) => {
+          {variants.map((v, i) => {
             const active = i === index;
             return (
               <button
@@ -216,7 +225,7 @@ export function CardShowcase({
       <p className="mt-2 text-xs font-medium text-slate-400" aria-live="polite">
         <span className="tnum">{String(index + 1).padStart(2, '0')}</span>
         <span className="mx-1.5 text-slate-300">/</span>
-        <span className="tnum">{String(CARD_VARIANTS.length).padStart(2, '0')}</span>
+        <span className="tnum">{String(variants.length).padStart(2, '0')}</span>
         <span className="mx-1.5">—</span>
         {variant.label}
       </p>

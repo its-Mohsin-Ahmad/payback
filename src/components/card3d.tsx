@@ -121,6 +121,30 @@ export function CardFront({
    * own width, which also keeps the face in proportion at `sm` and `lg`.
    */
   const px = (n: number) => `${Math.round((n / 340) * cfg.width)}px`;
+
+  /**
+   * Embossed name fitting (spec §14).
+   *
+   * A real name like "MUHAMMAD ABDUL REHMAN KHAN" is over twice the width of
+   * "AHMED KHAN". The previous markup just let `truncate` cut it to
+   * "MUHAMMAD ABDUL R…", which loses the most identifying part of the name and
+   * is exactly what the spec rules out.
+   *
+   * Instead the type size and letter-spacing are stepped down with the length,
+   * and only a genuinely extreme name (a very long compound surname) is allowed
+   * to truncate. Three discrete steps rather than a continuous scale keeps the
+   * layout stable and avoids a re-measure loop.
+   */
+  const nameLength = card.holder.length;
+  const holderFit =
+    nameLength <= 14 ? cfg.holder : nameLength <= 19 ? cfg.holder : nameLength <= 24 ? 'text-[9px]' : 'text-[8px]';
+  // Tightening tracking recovers width without making the name look cramped.
+  const holderTracking = nameLength <= 19 ? '0.1em' : nameLength <= 24 ? '0.04em' : '0em';
+  // Base sizes differ per card size, so the reduced steps are derived from them.
+  const holderBase = Number.parseFloat(cfg.holder.replace(/[^\d.]/g, '')) || 14;
+  const holderInline =
+    nameLength <= 19 ? undefined : { fontSize: `${(nameLength <= 24 ? holderBase * 0.78 : holderBase * 0.62).toFixed(1)}px` };
+
   return (
     <CardSurface card={card} size={size} shine={shine}>
       <div className="flex items-start justify-between">
@@ -152,7 +176,14 @@ export function CardFront({
         <div className="mt-1.5 flex items-end justify-between">
           <div className="min-w-0">
             <p className={cn('font-semibold uppercase tracking-[0.16em]', tone.inkSoft, cfg.font)}>Cardholder</p>
-            <p className={cn('truncate font-semibold uppercase tracking-[0.1em]', tone.ink, cfg.holder)}>{card.holder}</p>
+            {/* `truncate` is retained only as the final safety net for extreme
+                names; the size steps above handle everything realistic (§14). */}
+            <p
+              className={cn('truncate font-semibold uppercase', tone.ink, holderFit)}
+              style={{ letterSpacing: holderTracking, ...holderInline }}
+            >
+              {card.holder}
+            </p>
           </div>
           <div className="shrink-0 text-right">
             <p className={cn('font-semibold uppercase tracking-[0.16em]', tone.inkSoft, cfg.font)}>Valid thru</p>

@@ -1,8 +1,8 @@
-import { Globe2, Nfc, ShoppingCart, Wallet, type LucideIcon } from 'lucide-react';
+﻿import { Globe2, Nfc, ShoppingCart, Wallet, type LucideIcon } from 'lucide-react';
 import { Toggle } from '@/components/ui';
 import { useSession } from '@/lib/session/SessionProvider';
 import type { UserCard } from '@/lib/session/types';
-import type { CardVariant } from './cardVariants';
+import type { ResolvedCardVariant } from './cardVariants';
 
 interface ControlDef {
   /** Lookup key on the rendered card (the presentation model). */
@@ -38,7 +38,7 @@ const CONTROLS: ControlDef[] = [
  * navigating away and coming back. Earlier this was local `useState`, which
  * looked like it saved and silently did not.
  */
-export function CardControls({ variant }: { variant: CardVariant }) {
+export function CardControls({ variant }: { variant: ResolvedCardVariant }) {
   const { updateCard } = useSession();
   const cardId = variant.card.id;
 

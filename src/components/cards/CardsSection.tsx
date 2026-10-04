@@ -97,8 +97,11 @@ export function CardsSection({
         <div className="mt-10 lg:mt-14 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center lg:gap-10 xl:gap-16">
           {/* Showcase — 57.5% of the row on desktop. */}
           <div className="flex flex-col gap-6">
-            <CardShowcase index={index} onIndexChange={select} />
-            <CardSelector index={index} onIndexChange={select} />
+            {/* Variants are resolved once here and handed to both children, so the
+                card on screen and the selector chips can never disagree about
+                which cardholder is displayed (spec §3). */}
+            <CardShowcase variants={variants} index={index} onIndexChange={select} />
+            <CardSelector variants={variants} index={index} onIndexChange={select} />
           </div>
 
           {/* Information — 42.5%. */}

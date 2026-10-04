@@ -124,14 +124,18 @@ const DEMO_PAN: Record<string, string> = {
   'card-6': '5301 8820 4412 9081',
 };
 
-const holders: Record<string, string> = {
-  'card-1': 'MOHSIN AHMAD',
-  'card-2': 'MOHSIN AHMAD',
-  'card-3': 'NORTHWIND TECH',
-  'card-4': 'MOHSIN AHMAD',
-  'card-5': 'M AHMAD',
-  'card-6': 'MOHSIN AHMAD',
-};
+/**
+ * Business cards carry the *authorised individual's* name, not the company's
+ * (spec §4). The company is printed separately as the card's own title, so a
+ * business card reads:
+ *
+ *   NORTHWIND TECHNOLOGIES
+ *   AHMED KHAN
+ *
+ * Passing the business name in as the holder would erase the person who is
+ * actually authorised to spend, which is the opposite of what a cardholder line
+ * is for.
+ */
 
 export interface SecureElementState {
   present: boolean;
@@ -165,41 +169,58 @@ export interface PaybackCard {
   secureElement: SecureElementState;
 }
 
-export const paybackCards: PaybackCard[] = seedCards.map((card, index) => {
-  const tier = TIER_BY_CARD_ID[card.id] ?? CARD_TIERS[index % CARD_TIERS.length];
-  const identity = CARD_IDENTITIES[tier];
-  const pan = DEMO_PAN[card.id] ?? `4242 4242 4242 ${card.last4}`;
-  return {
-    id: card.id,
-    identity,
-    holder: holders[card.id] ?? 'MOHSIN AHMAD',
-    maskedPan: `•••• •••• •••• ${card.last4}`,
-    demoPan: pan,
-    last4: card.last4,
-    expiry: card.expiry,
-    status: card.status,
-    type: card.type,
-    limit: card.limit,
-    spent: card.spent,
-    dailyLimit: Math.round(card.limit / 30),
-    monthlyLimit: card.limit,
-    currency: card.currency,
-    online: card.online,
-    international: card.international,
-    contactless: card.contactless,
-    atm: card.atm,
-    virtual: tier === 'virtual',
-    secureElement: {
-      present: tier !== 'virtual',
-      label: tier === 'virtual' ? 'Tokenised in device wallet' : 'PAYBACK Secure Element',
-      state: tier === 'virtual' ? 'Not enabled' : 'Active',
-      detail:
-        tier === 'virtual'
-          ? 'Virtual cards use a device-bound token instead of a physical secure element.'
-          : 'Embedded hardware module that binds this card to your PAYBACK identity for key storage and transaction signing (concept).',
-    },
-  };
-});
+/**
+ * Build the six demo cards for a given cardholder.
+ *
+ * This is a *function*, not a constant, and that is the whole point (spec §2,
+ * §12, §17). It used to be a module-level `paybackCards` array with the holder
+ * name baked in as `'MOHSIN AHMAD'`, which meant every card in the application
+ * — the cards manager, the corporate cards page, and the public homepage — was
+ * permanently embossed with one specific person's name regardless of who was
+ * signed in.
+ *
+ * Requiring the caller to supply the name makes that class of bug impossible to
+ * reintroduce: there is no name to fall back to.
+ */
+export function demoCardsFor(cardholderName: string): PaybackCard[] {
+  const holder = cardholderName.trim().toUpperCase();
+  return seedCards.map((card, index) => {
+    const tier = TIER_BY_CARD_ID[card.id] ?? CARD_TIERS[index % CARD_TIERS.length];
+    const identity = CARD_IDENTITIES[tier];
+    const pan = DEMO_PAN[card.id] ?? `4242 4242 4242 ${card.last4}`;
+    return {
+      id: card.id,
+      identity,
+      // The embossed name comes from the signed-in profile, every time.
+      holder,
+      maskedPan: `•••• •••• •••• ${card.last4}`,
+      demoPan: pan,
+      last4: card.last4,
+      expiry: card.expiry,
+      status: card.status,
+      type: card.type,
+      limit: card.limit,
+      spent: card.spent,
+      dailyLimit: Math.round(card.limit / 30),
+      monthlyLimit: card.limit,
+      currency: card.currency,
+      online: card.online,
+      international: card.international,
+      contactless: card.contactless,
+      atm: card.atm,
+      virtual: tier === 'virtual',
+      secureElement: {
+        present: tier !== 'virtual',
+        label: tier === 'virtual' ? 'Tokenised in device wallet' : 'PAYBACK Secure Element',
+        state: tier === 'virtual' ? 'Not enabled' : 'Active',
+        detail:
+          tier === 'virtual'
+            ? 'Virtual cards use a device-bound token instead of a physical secure element.'
+            : 'Embedded hardware module that binds this card to your PAYBACK identity for key storage and transaction signing (concept).',
+      },
+    };
+  });
+}
 
 /** Concept-only SIM banking identity. Not a mobile-network SIM. */
 export const secureSim = {

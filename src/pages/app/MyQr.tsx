@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Download, Plus, Share2, ShieldCheck, Wallet } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
 import { QrCode } from '@/components/qr';
@@ -15,7 +15,8 @@ import {
   Select,
   useToast,
 } from '@/components/ui';
-import { customer } from '@/data/mock';
+import { accountsFor, displayName } from '@/lib/session/selectors';
+import { useSession } from '@/lib/session/SessionProvider';
 import { demoMyQr, encodeQr } from '@/lib/qrData';
 
 export default function MyQrPage() {
@@ -26,7 +27,13 @@ export default function MyQrPage() {
   const [expiry, setExpiry] = useState('15');
   const [custom, setCustom] = useState<string | null>(null);
 
-  const maskedId = `PAYBACK ••• ${customer.iban.slice(-4)}`;
+  // The payment code identifies the signed-in user, so it can never collect
+  // money against someone else's account (spec §12).
+  const { session } = useSession();
+  const user = session.user;
+  const primaryAccount = accountsFor(session)[0];
+
+  const maskedId = `PAYBACK ••• ${primaryAccount?.number.slice(-4) ?? '0000'}`;
 
   const createQr = () => {
     const value = Number(amount) || 0;
@@ -40,7 +47,7 @@ export default function MyQrPage() {
         kind: 'payment',
         ref: `PAY-REQ-${Math.floor(Math.random() * 90000 + 10000)}`,
         exp: Date.now() + minutes * 60_000,
-        meta: { merchant: customer.name, currency, amount: value.toFixed(2), description: description || 'Payment request' },
+        meta: { merchant: displayName(user), currency, amount: value.toFixed(2), description: description || 'Payment request' },
       })
     );
     toast.success('Payment QR created', 'Share it, download it, or let the payer scan it.');
@@ -75,7 +82,7 @@ export default function MyQrPage() {
             </div>
 
             <div className="text-center">
-              <p className="text-lg font-bold text-slate-900">{customer.name}</p>
+              <p className="text-lg font-bold text-slate-900">{displayName(user)}</p>
               <p className="tnum text-sm text-slate-500">{maskedId}</p>
               <div className="mt-2 flex flex-wrap justify-center gap-2">
                 <Badge tone="emerald">Verified</Badge>

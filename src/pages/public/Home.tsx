@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   CreditCard,
@@ -23,11 +23,18 @@ import { ContactlessGlyph, PaybackCard3D } from '@/components/card3d';
 import { AreaChart, DonutChart, GroupedBarChart } from '@/components/charts';
 import { ProviderLogo } from '@/components/logos';
 import { DemoBanner, SecurityBadge } from '@/components/ui';
-import { paybackCards } from '@/lib/cardData';
-
-const heroCard = paybackCards[0];
+import { useDemoCards } from '@/components/cards/cardVariants';
 
 export default function HomePage() {
+  /**
+   * Even the marketing page embosses the signed-in user's name.
+   *
+   * A visitor who registers and then returns to the homepage should see their own
+   * card, not a stranger's (spec §12, §17). `useDemoCards` stamps the name from
+   * the session, so there is no name literal anywhere on this page.
+   */
+  const demoCards = useDemoCards();
+  const heroCard = demoCards[0];
   return (
     <div>
       {/* ---------------------------------------------------------------- */}
@@ -237,9 +244,9 @@ export default function HomePage() {
           <div className="flex flex-col items-center">
             <div className="pb-fan flex items-start justify-center">
               {[
-                { card: paybackCards[0], label: 'Green', hint: 'Everyday' },
-                { card: paybackCards[1], label: 'Platinum', hint: 'Metal' },
-                { card: paybackCards[2], label: 'Gold', hint: 'Signature' },
+                { card: demoCards[0], label: 'Green', hint: 'Everyday' },
+                { card: demoCards[1], label: 'Silver', hint: 'Metal' },
+                { card: demoCards[2], label: 'Gold', hint: 'Signature' },
               ].map((item, i) => (
                 <div
                   key={item.label}
@@ -613,7 +620,7 @@ export default function HomePage() {
             <div className="flex justify-center">
               <div className="relative">
                 <div className="animate-float">
-                  <PaybackCard3D card={paybackCards[2]} size="md" />
+                  <PaybackCard3D card={demoCards[2]} size="md" />
                 </div>
                 <div className="absolute -bottom-6 -left-6 hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3.5 py-2.5 backdrop-blur sm:flex">
                   <ShieldCheck className="h-4 w-4 text-emerald-300" aria-hidden />

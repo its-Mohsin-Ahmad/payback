@@ -1,6 +1,6 @@
-import { Check } from 'lucide-react';
+﻿import { Check } from 'lucide-react';
 import { Badge } from '@/components/ui';
-import type { CardVariant } from './cardVariants';
+import type { ResolvedCardVariant } from './cardVariants';
 
 /**
  * Information panel for the selected variant (spec §19–§21).
@@ -9,7 +9,7 @@ import type { CardVariant } from './cardVariants';
  * demo configuration — a card page that states real prices it cannot honour is a
  * worse problem than one that admits it is showing sample data (spec §20).
  */
-export function CardInformation({ variant }: { variant: CardVariant }) {
+export function CardInformation({ variant }: { variant: ResolvedCardVariant }) {
   return (
     <div className="flex flex-col gap-6">
       <div>

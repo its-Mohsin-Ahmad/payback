@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { sessionFromSignup, useSession } from '@/lib/session/SessionProvider';
 import {
@@ -402,7 +402,7 @@ function PersonalStep({ data, patch }: { data: Onboarding; patch: (next: Partial
   return (
     <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-card sm:p-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Input label="First name *" required value={data.firstName} onChange={(e) => patch({ firstName: e.target.value })} placeholder="Mohsin" />
+        <Input label="First name *" required value={data.firstName} onChange={(e) => patch({ firstName: e.target.value })} placeholder="e.g. Ahmed" />
         <Input label="Middle name" value={data.middleName} onChange={(e) => patch({ middleName: e.target.value })} placeholder="Optional" />
         <Input label="Last name *" required value={data.lastName} onChange={(e) => patch({ lastName: e.target.value })} placeholder="Ahmad" />
       </div>
@@ -679,7 +679,7 @@ function IdentityStep({
         Please confirm the details below match your document. Nothing has been stored.
       </Alert>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input label="Full name" value={`${data.firstName} ${data.lastName}`.trim() || 'Mohsin Ahmad'} onChange={() => undefined} />
+        <Input label="Full name" value={`${data.firstName} ${data.lastName}`.trim() || ''} onChange={() => undefined} />
         <Input label="Date of birth" value={data.dob || '1991-08-14'} onChange={() => undefined} />
         <Input label="Document number" value={data.documentNumber || '35202-1188394-7'} onChange={() => undefined} />
         <Input label="Expiry date" value="2029-04-30" onChange={() => undefined} />
