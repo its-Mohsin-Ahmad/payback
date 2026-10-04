@@ -456,6 +456,8 @@ export function PaybackCard3D({
   onActivate,
   flipOnActivate = true,
   flipLabel = true,
+  flipped,
+  onFlipChange,
 }: {
   card: PaybackCard;
   size?: CardSize;
@@ -481,13 +483,24 @@ export function PaybackCard3D({
    */
   flipOnActivate?: boolean;
   flipLabel?: boolean;
+  /**
+   * Controlled flip state. Omit it and the card owns its own rotation; supply it
+   * when a gesture must be disambiguated first. The showcase needs to tell a tap
+   * (flip) from a horizontal swipe (change card), and because `click` fires after
+   * the swipe has already been handled, the card cannot decide on its own.
+   */
+  flipped?: boolean;
+  onFlipChange?: (flipped: boolean) => void;
 }) {
   const cfg = SIZES[size];
   const reduced = usePrefersReducedMotion();
-  const [side, setSide] = useState<CardSide>('front');
+  const [internalFlipped, setInternalFlipped] = useState(false);
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
   const [shine, setShine] = useState({ x: 50, y: 28 });
   const wrap = useRef<HTMLDivElement>(null);
+
+  const isFlipped = flipped ?? internalFlipped;
+  const side: CardSide = isFlipped ? 'back' : 'front';
 
   /**
    * Flipping and selection are deliberately separate concerns: `onSideChange`
@@ -495,12 +508,13 @@ export function PaybackCard3D({
    * carousel relies on this to centre a card without it needing to flip too.
    */
   const flip = useCallback(() => {
-    setSide((prev) => {
-      const next: CardSide = prev === 'front' ? 'back' : 'front';
-      onSideChange?.(next);
-      return next;
-    });
-  }, [onSideChange]);
+    const next = !isFlipped;
+    // Only write to internal state when uncontrolled, or the parent and the card
+    // would both own the rotation and fight over it.
+    if (flipped === undefined) setInternalFlipped(next);
+    onFlipChange?.(next);
+    onSideChange?.(next ? 'back' : 'front');
+  }, [isFlipped, flipped, onFlipChange, onSideChange]);
 
   /** One gesture: optionally flip, always report the selection intent. */
   const activate = useCallback(() => {

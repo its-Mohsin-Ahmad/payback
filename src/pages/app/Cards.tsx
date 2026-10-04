@@ -16,7 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
-import { CardCarousel } from '@/components/card3d';
+import { CardsSection } from '@/components/cards';
 import {
   Alert,
   Badge,
@@ -35,7 +35,7 @@ import {
   useToast,
 } from '@/components/ui';
 import { cardUtilisation, paybackCards, secureSim, type PaybackCard } from '@/lib/cardData';
-import { CardsSkeleton, useBoundedLoader } from '@/components/loaders';
+import { useBoundedLoader } from '@/components/loaders';
 import { money } from '@/lib/utils';
 
 type AuthAction = 'freeze' | 'unfreeze' | 'replace' | 'pin' | null;
@@ -58,17 +58,13 @@ export default function CardsPage() {
   /**
    * Hold a skeleton frame until the card set has "arrived".
    *
-   * This also guarantees the carousel mounts at its final width, so the centre
-   * calculation runs against real geometry rather than a zero-width track.
+   * This also guarantees the card mounts at its final width, so the showcase
+   * centres against real geometry rather than a zero-width track.
    */
   const loading = useBoundedLoader(550);
 
   if (loading) {
-    return (
-      <PageWrap>
-        <CardsSkeleton />
-      </PageWrap>
-    );
+    return <CardsSection state="loading" />;
   }
 
   const active = cards.find((c) => c.id === activeId) ?? cards[0];
@@ -105,7 +101,25 @@ export default function CardsPage() {
   };
 
   return (
-    <PageWrap>
+    <>
+      {/* Premium showcase. Rendered full-bleed above the operational content: it
+          owns its own max-width and padding (spec §4), and the card needs the
+          vertical space to stay the visual hero. */}
+      <CardsSection
+        stickyCta
+        /* Keep the controls below bound to whichever card is on show. */
+        onVariantChange={setActiveId}
+        onOrder={(key) =>
+          toast.success(
+            `${key === 'gold' ? 'PAYBACK Gold' : key === 'silver' ? 'PAYBACK Silver' : 'PAYBACK Green'} selected`,
+            'Card issuance is simulated in this prototype — no card is issued.',
+          )
+        }
+      />
+
+      {/* Extra bottom padding on phones only, so the sticky CTA (spec §41) never
+          covers the last row of the payment controls. */}
+      <PageWrap className="pb-32 lg:pb-6">
       <PageHeader
         eyebrow="Move money"
         title="Your Cards"
@@ -131,42 +145,6 @@ export default function CardsPage() {
         label="Demo cards"
         text="Cards, numbers, limits and secure elements are illustrative. No physical or virtual card is issued and no card network is involved."
       />
-
-      {/* Premium 3D gallery. The heading names the *collection* rather than the
-          selected card: the carousel prints the active card's own name and
-          tagline directly beneath it, so repeating it here stacked two identical
-          captions on top of each other. */}
-      <section className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-slate-50 to-white p-4 shadow-card sm:p-8">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Your cards</h2>
-            <p className="text-sm text-slate-500">
-              {cards.length} demo cards · swipe, tap a card, or use the arrows
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={active.status === 'Active' ? 'emerald' : active.status === 'Frozen' ? 'amber' : 'rose'}>{active.status}</Badge>
-            <Badge tone="navy">{active.type}</Badge>
-            {active.virtual ? <Badge tone="sky">Digital only</Badge> : null}
-            {active.secureElement.present ? (
-              <Badge tone="violet" icon={<Fingerprint className="h-3 w-3" aria-hidden />}>
-                Secure element
-              </Badge>
-            ) : null}
-          </div>
-        </div>
-
-        <CardCarousel
-          cards={cards}
-          activeId={activeId}
-          onActiveChange={setActiveId}
-          size="md"
-          showPan={showPan}
-          className="mt-4"
-        />
-        {/* The row's depth now comes from the per-card accent halo, so the old dark
-            floor blob is gone — it read as a grey smudge under the cards. */}
-      </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Combined limit" value={money(totals.limit, 'USD', { decimals: false })} tone="#10B981" />
@@ -483,6 +461,7 @@ export default function CardsPage() {
           <Alert tone="warning" title="Concept only">{secureSim.disclaimer}</Alert>
         </div>
       </Modal>
-    </PageWrap>
+      </PageWrap>
+    </>
   );
 }
