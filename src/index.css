@@ -5,6 +5,13 @@
 @layer base {
   :root {
     color-scheme: light;
+    /*
+     * Rendered height of the bottom navigation, published so scrollable content
+     * can reserve exactly that much space (spec §12). Kept in sync with the nav
+     * itself; the fallback in `pb-[calc(...)]` covers first paint before this
+     * resolves.
+     */
+    --pb-nav-h: 3.5rem;
   }
 
   html {
@@ -14,6 +21,28 @@
   body {
     @apply bg-surface font-sans text-slate-700 antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    /*
+     * Page-level overflow guard (spec §117): "the entire webpage must never
+     * horizontally scroll accidentally".
+     *
+     * `clip` rather than `hidden` on purpose. `overflow-x: hidden` turns the
+     * element into a scroll container, which silently breaks `position: sticky`
+     * on descendants and makes the page scrollable by touch. `clip` forbids
+     * scrolling outright while leaving sticky positioning intact.
+     *
+     * Bounded components that are *meant* to scroll sideways (carousels, filter
+     * chips) still work — they carry their own `overflow-x-auto`, and this rule
+     * only clamps the document itself.
+     */
+    overflow-x: clip;
+  }
+
+  /* Spec §135: when the OS raises the text size, layouts must adapt rather than
+     clip. Content-driven sizing means a capped row grows instead of cutting off
+     an amount or a navigation label. */
+  .text-scale-safe {
+    min-height: 1.5em;
+    overflow-wrap: anywhere;
   }
 
   h1,
@@ -84,8 +113,34 @@
 }
 
 @layer utilities {
+  /* All four safe-area insets (spec §06). `pb-safe`/`pt-safe` are the ones that
+     matter in portrait; the horizontal pair matters in landscape, where a
+     notch eats into the left or right edge on modern phones. */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Minimum thumb target (spec §111). Applied to icon buttons and list rows
+     rather than globally, since a 44px minimum on inline text links would
+     wreck paragraph flow. */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Small-phone guard for the 320–360px range, where two 44px targets plus
+     labels stop fitting side by side. */
+  .grid-tight {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   }
 
   /* 3D card mechanics */

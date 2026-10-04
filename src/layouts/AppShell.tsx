@@ -144,7 +144,8 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-print sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+        {/* `safe-top` clears the notch/Dynamic Island (spec §06). */}
+        <header className="no-print safe-top sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
             <button
               type="button"
@@ -267,12 +268,22 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 px-4 pb-24 pt-5 sm:px-6 lg:pb-10">
+        {/* Bottom padding reserves the real bottom-nav height plus its safe-area inset
+            (spec §12) instead of the previous hard-coded `pb-24`, so the last
+            transaction row is never hidden behind the nav on a device whose nav
+            is taller. `lg` keeps a small pad since the nav is hidden there. */}
+        <main className="min-w-0 flex-1 px-4 pb-[calc(var(--pb-nav-h,3.5rem)+1.5rem)] pt-5 sm:px-6 lg:pb-10">
           <Outlet />
         </main>
 
         {variant === 'personal' ? (
-          <nav className="no-print safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md lg:hidden" aria-label="Bottom">
+          /* `safe-x` handles the landscape notch; every item is a 44px+ target
+               (spec §111) and labels wrap rather than truncate when the OS text
+               size is raised (spec §135). */
+          <nav
+            className="no-print safe-bottom safe-x fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md lg:hidden"
+            aria-label="Bottom"
+          >
             <ul className="grid grid-cols-5">
               {bottomNav.map((item) => (
                 <li key={item.to}>
@@ -280,7 +291,10 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      cn('focus-ring flex flex-col items-center gap-1 px-1 py-2.5 text-[10px] font-semibold transition-colors', isActive ? 'text-emerald-600' : 'text-slate-400')
+                      cn(
+                        'focus-ring touch-target flex flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-semibold leading-tight transition-colors',
+                        isActive ? 'text-emerald-600' : 'text-slate-400',
+                      )
                     }
                   >
                     {({ isActive }) => (

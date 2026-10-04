@@ -502,6 +502,142 @@ function useEscape(active: boolean, onEscape: () => void) {
   }, [active, onEscape]);
 }
 
+/**
+ * Focus management for overlays (spec §188).
+ *
+ * Opening a sheet moves focus inside it, and closing returns focus to the
+ * control that opened it. Without this, keyboard and screen-reader users are
+ * dropped back at the top of the document after every dismissal.
+ */
+function useFocusReturn(open: boolean, container: React.RefObject<HTMLElement>) {
+  const opener = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) {
+      opener.current = (document.activeElement as HTMLElement) ?? null;
+      // Focus the container itself rather than its first control, so a screen
+      // reader announces the sheet's title before its contents.
+      const target = container.current;
+      if (target) {
+        target.focus({ preventScroll: true });
+      }
+      return;
+    }
+    const el = opener.current;
+    if (el && document.contains(el)) el.focus({ preventScroll: true });
+    opener.current = null;
+  }, [open, container]);
+}
+
+/**
+ * Bottom sheet — the mobile form of every dialog (spec §106).
+ *
+ * On a phone a centred modal is a desktop artefact: it floats in the middle of
+ * the screen where thumbs cannot reach and wastes the space either side. This
+ * anchors to the bottom edge instead, with a drag handle, and grows only as far
+ * as its content needs.
+ *
+ * Drag-to-dismiss is implemented with pointer events so it works for mouse,
+ * touch and pen alike. A 96px pull commits the dismissal; anything shorter
+ * springs back, which stops an accidental nudge from closing a form the user
+ * was midway through.
+ */
+export function BottomSheet({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  height = 'auto',
+}: {
+  open: boolean;
+  onClose: () => void;
+  title?: ReactNode;
+  description?: ReactNode;
+  children: ReactNode;
+  footer?: ReactNode;
+  /** `auto` fits its content, `tall` is 85vh, `full` covers the screen (§107). */
+  height?: 'auto' | 'tall' | 'full';
+}) {
+  useLockScroll(open);
+  useEscape(open, onClose);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  useFocusReturn(open, sheetRef);
+  const [dragY, setDragY] = useState(0);
+  const dragFrom = useRef<number | null>(null);
+
+  if (!open) return null;
+
+  const heights = { auto: 'max-h-[85vh]', tall: 'h-[85vh]', full: 'h-[100dvh]' } as const;
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragFrom.current = e.clientY;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragFrom.current === null) return;
+    // Only downward drag is honoured; pulling above the resting point does
+    // nothing rather than detaching the sheet from the bottom edge.
+    setDragY(Math.max(0, e.clientY - dragFrom.current));
+  };
+  const onPointerUp = () => {
+    if (dragY > 96) onClose();
+    dragFrom.current = null;
+    setDragY(0);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center" role="presentation">
+      <div className="absolute inset-0 bg-navy/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div
+        ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={typeof title === 'string' ? title : undefined}
+        tabIndex={-1}
+        className={cn(
+          'animate-sheet-up relative z-10 flex w-full flex-col overflow-hidden rounded-t-sheet bg-white shadow-lift outline-none',
+          heights[height],
+          height === 'auto' && 'max-h-[85vh]',
+        )}
+        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
+      >
+        {/* Drag handle. `touch-action: none` stops the browser scrolling the
+            page while the user is dragging the sheet itself. */}
+        <div
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          className="flex shrink-0 cursor-grab touch-none justify-center pb-1 pt-3 active:cursor-grabbing"
+        >
+          <span className="h-1.5 w-10 rounded-full bg-slate-300" aria-hidden />
+          <span className="sr-only">Drag down to close</span>
+        </div>
+
+        {(title || description) && (
+          <div className="shrink-0 px-5 pb-3 pt-1">
+            {title ? <h2 className="text-section-title font-bold text-slate-900">{title}</h2> : null}
+            {description ? <p className="mt-1 text-caption-fluid text-slate-500">{description}</p> : null}
+          </div>
+        )}
+
+        <div className="sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-5 pb-2">{children}</div>
+
+        {footer ? (
+          /* Sticky actions sit above the home indicator (spec §06) and stack
+             full-width, which is how a thumb actually reaches them. */
+          <div className="safe-bottom shrink-0 border-t border-slate-100 bg-white px-5 py-4">
+            <div className="flex flex-col-reverse gap-2 xs:flex-row xs:justify-end">{footer}</div>
+          </div>
+        ) : (
+          <div className="safe-bottom shrink-0" />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Modal({
   open,
   onClose,
