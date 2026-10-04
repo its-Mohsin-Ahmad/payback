@@ -13,8 +13,9 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from 'react';
-import { AlertTriangle, Check, CheckCircle2, Info, Loader2, ShieldCheck, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, Info, ShieldCheck, X, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ButtonLoader } from '@/components/loaders';
 
 /* ------------------------------------------------------------------ */
 /* Button                                                              */
@@ -83,9 +84,18 @@ export function Button({
       aria-busy={loading || undefined}
       {...rest}
     >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : icon}
-      {children}
-      {iconRight}
+      {/*
+        The busy state comes from the unified loading system, so every button in
+        the product shows the same arc and announces itself the same way instead
+        of each screen rolling its own generic spinner.
+      */}
+      {loading ? (
+        <ButtonLoader tone={variant === 'outline' || variant === 'ghost' || variant === 'soft' || variant === 'link' ? 'dark' : 'light'} />
+      ) : (
+        icon
+      )}
+      <span className={cn(loading && 'opacity-80')}>{children}</span>
+      {loading ? null : iconRight}
     </button>
   );
 }

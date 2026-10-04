@@ -154,6 +154,93 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Unified loading system                                             */
+/* ------------------------------------------------------------------ */
+
+/* The brand glyph "assembles": the hexagon traces itself, then the chevron
+   settles in. This is the single loader logo used everywhere, so the loading
+   experience carries the same mark as the site, the card and the admin rail. */
+@keyframes pb-hex-trace {
+  0% { stroke-dashoffset: 62; opacity: 0.35; }
+  45% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes pb-chevron-in {
+  0%, 35% { stroke-dashoffset: 22; opacity: 0; }
+  70% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes pb-tile-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.16; }
+  50% { transform: scale(1.28); opacity: 0.04; }
+}
+
+/* Slow architectural rotation — deliberately not a fast spinner. */
+@keyframes pb-orbit { to { transform: rotate(360deg); } }
+@keyframes pb-orbit-reverse { to { transform: rotate(-360deg); } }
+
+/* Indeterminate progress: a segment that sweeps and restarts. It never claims
+   a numeric value it does not have. */
+@keyframes pb-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(320%); }
+}
+
+@keyframes pb-bar-grow {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Flowing "value in motion" trail used by transfer / payment loaders. */
+@keyframes pb-flow {
+  0% { transform: translateX(0); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(var(--pb-flow-distance, 240px)); opacity: 0; }
+}
+
+/* Biometric: concentric rings contracting like a sensor read. */
+@keyframes pb-biometric-wave {
+  0% { transform: scale(0.55); opacity: 0.75; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* QR / KYC: a bright scan band travelling down the viewport. */
+@keyframes pb-scan-band {
+  0% { transform: translateY(-12%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(112%); opacity: 0; }
+}
+
+/* Confirmed state: the mark resolves into a tick. */
+@keyframes pb-confirm-pop {
+  0% { transform: scale(0.86); opacity: 0; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pb-confirm-draw {
+  0% { stroke-dashoffset: 30; opacity: 0.2; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+/* Error: a short, low-amplitude shake. Enough to register, not enough to be
+   disruptive — a full oscillation is painful for vestibular disorders. */
+@keyframes pb-fault {
+  0%, 100% { transform: translateX(0); }
+  22% { transform: translateX(-4px); }
+  46% { transform: translateX(3px); }
+  70% { transform: translateX(-1.5px); }
+}
+
+/* Page transition veil */
+@keyframes pb-veil-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes pb-veil-out { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ------------------------------------------------------------------ */
 /* Premium motion                                                       */
 /* ------------------------------------------------------------------ */
 
@@ -239,6 +326,111 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.pb-assemble-hex {
+  stroke-dasharray: 62;
+  animation: pb-hex-trace 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.pb-assemble-chevron {
+  stroke-dasharray: 22;
+  animation: pb-chevron-in 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.pb-tile-breathe {
+  transform-origin: center;
+  animation: pb-tile-breathe 3.4s ease-in-out infinite;
+}
+
+.pb-orbit { animation: pb-orbit 9s linear infinite; }
+.pb-orbit-rev { animation: pb-orbit-reverse 13s linear infinite; }
+.pb-orbit-dashed { stroke-dasharray: 4 10; }
+
+.pb-sweep { animation: pb-sweep 1.7s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+.pb-bar-grow { animation: pb-bar-grow 1.7s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.pb-flow-dot { animation: pb-flow 2.1s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
+.pb-biometric-wave {
+  transform-origin: center;
+  animation: pb-biometric-wave 2.4s ease-out infinite;
+}
+.pb-scan-band { animation: pb-scan-band 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+
+.pb-confirm-pop { animation: pb-confirm-pop 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pb-confirm-tick {
+  stroke-dasharray: 30;
+  animation: pb-confirm-draw 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.pb-fault { animation: pb-fault 0.42s ease-in-out 1; }
+.pb-veil-in { animation: pb-veil-in 0.24s ease-out both; }
+.pb-veil-out { animation: pb-veil-out 0.32s ease-in forwards; }
+
+/* ------------------------------------------------------------------ */
+/* Skeletons                                                           */
+/* ------------------------------------------------------------------ */
+
+/*
+  A light pass travelling across placeholder blocks. This replaces a generic
+  spinner when *structure* is the thing being communicated: the user sees the
+  shape of the page they are about to get, which is far more useful feedback
+  than a spinning circle.
+*/
+.pb-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: rgba(148, 163, 184, 0.18);
+  background-image: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0) 0%,
+    rgba(148, 163, 184, 0.16) 45%,
+    rgba(148, 163, 184, 0) 90%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: pb-skeleton 1.9s ease-in-out infinite;
+}
+
+.dark .pb-skeleton {
+  background-color: rgba(148, 163, 184, 0.14);
+  background-image: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0) 0%,
+    rgba(203, 213, 225, 0.14) 45%,
+    rgba(148, 163, 184, 0) 90%
+  );
+}
+
+/*
+  Reduced motion: the shimmer is decorative, so it stops and the block holds a
+  neutral fill. The loader must still communicate "busy" — that is carried by
+  the accompanying aria-live text, not by the animation.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .pb-skeleton,
+  .pb-assemble-hex,
+  .pb-assemble-chevron,
+  .pb-tile-breathe,
+  .pb-orbit,
+  .pb-orbit-rev,
+  .pb-sweep,
+  .pb-bar-grow,
+  .pb-flow-dot,
+  .pb-biometric-wave,
+  .pb-scan-band {
+    animation: none !important;
+  }
+
+  /* Without the trace animation the dash pattern would leave the glyph blank. */
+  .pb-assemble-hex,
+  .pb-assemble-chevron {
+    stroke-dasharray: none;
+    opacity: 1;
+  }
+
+  .pb-veil-in { animation: none !important; opacity: 1; }
+  .pb-veil-out { animation: none !important; opacity: 0; }
 }
 
 .animate-float {

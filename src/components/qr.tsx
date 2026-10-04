@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Flashlight, HelpCircle, ImageUp, ScanLine, ShieldCheck, X } from 'lucide-react';
 import { Badge, Button, useToast } from '@/components/ui';
+import { LoaderAnnouncer } from '@/components/loaders';
 import { isExpired, parseQr, QR_KIND_LABEL, type QrPayload } from '@/lib/qrData';
 import { cn } from '@/lib/utils';
 
@@ -171,7 +172,6 @@ export function QrScanner({
 }) {
   const toast = useToast();
   const [phase, setPhase] = useState<ScanPhase>('scanning');
-  const [progress, setProgress] = useState(0);
   const [flash, setFlash] = useState(false);
   const [help, setHelp] = useState(false);
   const [payload, setPayload] = useState<QrPayload | null>(null);
@@ -190,21 +190,23 @@ export function QrScanner({
   const reset = () => {
     setPhase('scanning');
     setPayload(null);
-    setProgress(0);
   };
 
   useEffect(() => {
-    setProgress(0);
+    /*
+      The prototype auto-detects a sample code after a beat so the flow can be
+      walked end to end. This is a *timer*, not a measurement, so no progress
+      percentage is derived from it — showing "83%" here would be a fabricated
+      number that reaches 100% whether or not anything was actually scanned.
+    */
     const started = Date.now();
     const id = window.setInterval(() => {
-      const pct = Math.min(100, ((Date.now() - started) / 2400) * 100);
-      setProgress(pct);
-      if (pct >= 100) {
+      if (Date.now() - started >= 2400) {
         window.clearInterval(id);
         const sample = samples[samples.length - 1];
         if (sample) handleRaw(sample.raw);
       }
-    }, 60);
+    }, 120);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [samples, handleRaw]);
@@ -215,6 +217,11 @@ export function QrScanner({
     <div className={cn('relative overflow-hidden rounded-3xl bg-navy', className)}>
       <div className="relative flex min-h-[420px] items-center justify-center overflow-hidden">
         <div className="hero-grid absolute inset-0 opacity-30" aria-hidden />
+        {/*
+          The scanning state is announced, so a screen-reader user knows the
+          scanner is looking rather than being left with a silent dark rectangle.
+        */}
+        {phase === 'scanning' ? <LoaderAnnouncer message="Scanning" detail="Looking for a QR or barcode code." /> : null}
         <div className="animate-spin-slow absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" aria-hidden />
         <div className="absolute -bottom-28 -right-20 h-72 w-72 rounded-full bg-sky-500/15 blur-3xl" aria-hidden />
         {flash ? <div className="absolute inset-0 z-20 bg-white/85" aria-hidden /> : null}
@@ -229,7 +236,7 @@ export function QrScanner({
             <>
               <div className="animate-scan-line absolute inset-x-2 top-2 h-0.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.9)]" />
               <div className="absolute inset-x-0 -bottom-10 text-center text-xs font-medium text-white/70">
-                Looking for a code… {Math.round(progress)}%
+                Looking for a code…
               </div>
             </>
           ) : null}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, EyeOff, Gift, Send } from 'lucide-react';
 import { AccountCard, ActionGrid, ListShell, TransactionRow } from '@/components/blocks';
@@ -27,11 +27,27 @@ import {
 } from '@/data/mock';
 import { quickActions } from '@/lib/nav';
 import { money } from '@/lib/utils';
+import { DashboardSkeleton } from '@/components/loaders';
 
 export default function DashboardPage() {
   const [hideBalance, setHideBalance] = useState(false);
+  const [loading, setLoading] = useState(true);
   const masked = '••••••••';
   const latest = notifications.slice(0, 3);
+
+  /**
+   * Skeleton pass on first mount.
+   *
+   * The skeleton mirrors the real dashboard layout, so when the data lands the
+   * page does not jump. There is no percentage here on purpose — we are not
+   * measuring a real fetch, we are holding the frame until the data is ready.
+   */
+  useEffect(() => {
+    const t = window.setTimeout(() => setLoading(false), 650);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="mx-auto w-full max-w-content space-y-6">

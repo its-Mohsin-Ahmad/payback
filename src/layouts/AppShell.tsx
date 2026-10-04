@@ -84,11 +84,29 @@ function SidebarContent({ variant, onNavigate }: { variant: 'personal' | 'busine
   );
 }
 
+import { PaybackLoader } from '@/components/loaders';
+
 export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'business' }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
+  const [booting, setBooting] = useState(true);
   const { pathname } = useLocation();
   const toast = useToast();
+
+  /**
+   * Boot state for the authenticated app.
+   *
+   * The shell is shown only once the session has actually been restored, so the
+   * user never sees a half-built interface flash before it re-authenticates.
+   * It runs on entry only — never on navigation — and is deliberately
+   * indeterminate: we genuinely do not know how long a session restore takes.
+   */
+  useEffect(() => {
+    if (sessionStorage.getItem('pb:booted')) return;
+    sessionStorage.setItem('pb:booted', '1');
+    const t = window.setTimeout(() => setBooting(false), 900);
+    return () => window.clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -102,7 +120,14 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
   const current = [...flatNav].sort((a, b) => b.to.length - a.to.length).find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <>
+      <PaybackLoader
+        open={booting}
+        tone="dark"
+        message={variant === 'business' ? 'Opening your business account' : 'Opening your PAYBACK account'}
+        detail="Restoring your secure session."
+      />
+      <div className="flex min-h-screen bg-surface" aria-busy={booting || undefined}>
       <aside className="navy-mesh sticky top-0 hidden h-screen w-[268px] shrink-0 lg:block" aria-label="Sidebar">
         <SidebarContent variant={variant} />
       </aside>
@@ -268,7 +293,8 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
             </ul>
           </nav>
         ) : null}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

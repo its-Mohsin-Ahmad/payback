@@ -11,7 +11,6 @@ import {
   Eye,
   Fingerprint,
   IdCard,
-  Loader2,
   Lock,
   Mail,
   ShieldCheck,
@@ -33,6 +32,7 @@ import {
   SecurityBadge,
   useToast,
 } from '@/components/ui';
+import { LoaderBar, LoaderStages, PageLoader, type LoaderStage } from '@/components/loaders';
 import { cn } from '@/lib/utils';
 
 /* ------------------------------------------------------------------ */
@@ -617,12 +617,11 @@ function IdentityStep({
 
   if (stage === 'reading') {
     return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-card">
-        <Loader2 className="h-10 w-10 animate-spin text-emerald-500" aria-hidden />
-        <div>
-          <p className="text-base font-bold text-slate-900">Reading your document…</p>
-          <p className="mt-1 text-sm text-slate-500">Extracting name, date of birth, document number and expiry.</p>
-        </div>
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-card">
+        <PageLoader
+          message="Reading your document"
+          detail="Extracting name, date of birth, document number and expiry."
+        />
       </div>
     );
   }
@@ -1030,6 +1029,16 @@ const CREATE_STEPS = ['Validating information', 'Verifying identity', 'Setting u
 function CreatingScreen({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
 
+  /** Map the numeric step onto the shared stage model. */
+  const stages = useMemo(
+    () =>
+      CREATE_STEPS.map((label, i): LoaderStage => ({
+        label,
+        status: i < step ? 'complete' : i === step ? 'active' : 'pending',
+      })),
+    [step],
+  );
+
   useEffect(() => {
     if (step >= CREATE_STEPS.length - 1) {
       const done = window.setTimeout(onDone, 700);
@@ -1042,30 +1051,17 @@ function CreatingScreen({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-lift">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-          <Loader2 className="h-7 w-7 animate-spin" aria-hidden />
-        </span>
-        <h1 className="mt-5 text-xl font-bold text-slate-900">Creating Your PAYBACK Account</h1>
+        {/*
+          The stage rail replaces a hand-rolled list of numbered circles. It is
+          the honest progress model here: we genuinely know which step we are on,
+          so we show the steps rather than inventing a percentage.
+        */}
+        <LoaderStages stages={stages} className="mx-auto mt-2 w-full max-w-xs" />
+
+        <h1 className="mt-6 text-xl font-bold text-slate-900">Creating Your PAYBACK Account</h1>
         <p className="mt-1 text-sm text-slate-500">Please keep this screen open — it takes a few seconds.</p>
 
-        <ol className="mt-6 space-y-3 text-left">
-          {CREATE_STEPS.map((label, i) => (
-            <li key={label} className="flex items-center gap-3">
-              <span
-                className={cn(
-                  'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
-                  i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-navy text-white' : 'bg-slate-100 text-slate-400'
-                )}
-              >
-                {i < step ? <CheckCircle2 className="h-4 w-4" aria-hidden /> : i + 1}
-              </span>
-              <span className={cn('text-sm', i <= step ? 'font-semibold text-slate-800' : 'text-slate-400')}>{label}</span>
-              {i === step ? <Loader2 className="ml-auto h-4 w-4 animate-spin text-slate-400" aria-hidden /> : null}
-            </li>
-          ))}
-        </ol>
-
-        <ProgressBar value={step + 1} max={CREATE_STEPS.length} className="mt-6" label="Account creation progress" />
+        <LoaderBar progress={null} className="mt-6" />
       </div>
     </div>
   );

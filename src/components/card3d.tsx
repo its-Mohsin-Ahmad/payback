@@ -358,6 +358,7 @@ export function PaybackCard3D({
   fill = false,
   onSideChange,
   onActivate,
+  flipOnActivate = true,
   flipLabel = true,
 }: {
   card: PaybackCard;
@@ -377,6 +378,12 @@ export function PaybackCard3D({
   onSideChange?: (side: CardSide) => void;
   /** Fired whenever the card is activated (click, Enter or Space). */
   onActivate?: () => void;
+  /**
+   * Whether activating the card also flips it. The carousel turns this off so a
+   * tap only *selects* — flipping and selecting in one gesture left the card
+   * mid-rotation and half-scrolled out of the track.
+   */
+  flipOnActivate?: boolean;
   flipLabel?: boolean;
 }) {
   const cfg = SIZES[size];
@@ -397,8 +404,13 @@ export function PaybackCard3D({
       onSideChange?.(next);
       return next;
     });
+  }, [onSideChange]);
+
+  /** One gesture: optionally flip, always report the selection intent. */
+  const activate = useCallback(() => {
+    if (flipOnActivate) flip();
     onActivate?.();
-  }, [onSideChange, onActivate]);
+  }, [flip, flipOnActivate, onActivate]);
 
   const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!interactive || reduced) return;
@@ -471,9 +483,13 @@ export function PaybackCard3D({
             <button
               type="button"
               tabIndex={0}
-              aria-label={`${card.identity.name}, ${card.maskedPan}. Activate to ${side === 'front' ? 'view the back' : 'return to the front'}.`}
+              aria-label={
+                flipOnActivate
+                  ? `${card.identity.name}, ${card.maskedPan}. Activate to ${side === 'front' ? 'view the back' : 'return to the front'}.`
+                  : `${card.identity.name}, ${card.maskedPan}. Show this card.`
+              }
               aria-pressed={side === 'back'}
-              onClick={flip}
+              onClick={activate}
               className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-2xl border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
             />
           ) : null}
@@ -488,7 +504,9 @@ export function PaybackCard3D({
             >
               {side === 'front' ? 'View back' : 'View front'}
             </button>
-            <span className="text-[11px] text-slate-400">Tap the card to flip</span>
+            <span className="text-[11px] text-slate-400">
+              {flipOnActivate ? 'Tap the card to flip' : 'Tap to select'}
+            </span>
           </div>
         ) : null}
       </div>
@@ -499,6 +517,30 @@ export function PaybackCard3D({
 /* ------------------------------------------------------------------ */
 /* Carousel                                                            */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Geometry helpers.
+ *
+ * `offsetLeft` is resolved against the nearest *positioned* ancestor, and the
+ * scroll track is not one. Reading item offsets that way produced scroll targets
+ * hundreds of pixels away from the intended one, which slid the first card out
+ * of view and sliced it in half. Measuring each item against the track's own
+ * client rect is correct regardless of where the track is nested.
+ */
+function itemOffsetInTrack(track: HTMLElement, item: HTMLElement): number {
+  return item.getBoundingClientRect().left - track.getBoundingClientRect().left + track.scrollLeft;
+}
+
+/** Scroll position that centres `item` inside the track's scrollport. */
+function centreOffset(track: HTMLElement, item: HTMLElement): number {
+  // `getBoundingClientRect().left` is the border box, so subtract the inline
+  // start padding to get the true scroll offset of the item's content box.
+  const style = getComputedStyle(track);
+  const padStart = parseFloat(style.paddingLeft) || 0;
+  const target = itemOffsetInTrack(track, item) - padStart - (track.clientWidth - item.offsetWidth) / 2;
+  const max = Math.max(0, track.scrollWidth - track.clientWidth);
+  return Math.min(max, Math.max(0, target));
+}
 
 export function CardCarousel({
   cards,
@@ -518,6 +560,25 @@ export function CardCarousel({
   const cfg = SIZES[size];
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(() => Math.max(0, cards.findIndex((c) => c.id === activeId)));
+  /**
+   * Symmetric track padding, recomputed on resize. Equal to the space a card
+   * cannot use, so the first and last card can still reach the centre instead of
+   * being pinned against the edge of the scrollport.
+   */
+  const [trackPad, setTrackPad] = useState(12);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const measure = () => {
+      const spare = (el.clientWidth - cfg.width) / 2;
+      setTrackPad(Math.round(Math.max(12, spare)));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [cfg.width]);
 
   /**
    * Set while a programmatic smooth scroll is in flight. Scroll events fired by
@@ -535,14 +596,15 @@ export function CardCarousel({
     const el = trackRef.current;
     const item = el?.children[target] as HTMLElement | undefined;
     if (!el || !item) return;
-    // Centre the card inside the track's own scrollport.
-    const left = item.offsetLeft - (el.clientWidth - item.offsetWidth) / 2;
-    const next = Math.max(0, left);
+    const next = centreOffset(el, item);
     if (!smooth) {
       el.scrollTo({ left: next, behavior: 'auto' });
       return;
     }
-    animating.current = true;
+    // Release the lock on the next frame if the browser never scrolls (the card
+    // may already be centred). Without this the flag latched true and every
+    // subsequent user scroll was discarded.
+    animating.current = Math.abs(el.scrollLeft - next) > 1;
     el.scrollTo({ left: next, behavior: 'smooth' });
   };
 
@@ -576,18 +638,16 @@ export function CardCarousel({
     // Ignore the intermediate positions produced by our own smooth scroll.
     if (animating.current) {
       const item = el.children[index] as HTMLElement | undefined;
-      if (!item) return;
-      const desired = Math.max(0, item.offsetLeft - (el.clientWidth - item.offsetWidth) / 2);
-      if (Math.abs(el.scrollLeft - desired) <= 2) animating.current = false;
+      if (item && Math.abs(el.scrollLeft - centreOffset(el, item)) <= 2) animating.current = false;
       return;
     }
-    const center = el.scrollLeft + el.clientWidth / 2;
+    const centre = el.scrollLeft + el.clientWidth / 2;
     let best = 0;
     let bestDist = Number.POSITIVE_INFINITY;
     Array.from(el.children).forEach((child, i) => {
       const item = child as HTMLElement;
-      const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-      const dist = Math.abs(itemCenter - center);
+      const itemCentre = itemOffsetInTrack(el, item) + item.offsetWidth / 2;
+      const dist = Math.abs(itemCentre - centre);
       if (dist < bestDist) {
         bestDist = dist;
         best = i;
@@ -618,7 +678,11 @@ export function CardCarousel({
         role="group"
         aria-roledescription="carousel"
         aria-label="PAYBACK cards"
-        className="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 focus:outline-none"
+        className="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto pb-10 pt-2 focus:outline-none"
+        /* Symmetric padding = the leftover space around a card, so the first and
+           last cards can also reach the centre. The extra vertical padding keeps
+           the contact shadow from being clipped by the scroll container. */
+        style={{ paddingInline: trackPad }}
       >
         {cards.map((card, i) => {
           const distance = Math.abs(i - index);
@@ -639,6 +703,10 @@ export function CardCarousel({
                 /* Selection is driven by activation, never by the flip. This
                    updates `index`, reports the new active card and centres it. */
                 onActivate={() => emit(i)}
+                /* Tapping a card in the carousel selects it. Flipping stays on
+                   the explicit control so a tap never rotates the card out from
+                   under the pointer mid-scroll. */
+                flipOnActivate={false}
                 flipLabel={i === index}
               />
               <div className="mt-2 text-center">

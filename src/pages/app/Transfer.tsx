@@ -45,6 +45,7 @@ import {
   Toggle,
   useToast,
 } from '@/components/ui';
+import { TransferLoader, type LoaderStage } from '@/components/loaders';
 import { PageWrap } from '@/components/blocks';
 import { QrCode as ReceiptQr } from '@/components/qr';
 import { Icon } from '@/components/Icon';
@@ -76,6 +77,14 @@ const STEPS: { key: Step; label: string; hint: string }[] = [
   { key: 'review', label: 'Review', hint: 'Confirm' },
   { key: 'verify', label: 'Verify', hint: 'Two-factor' },
 ];
+
+/**
+ * The stages a bank transfer genuinely passes through.
+ *
+ * Shown while the transfer is in flight instead of a percentage — we can name
+ * each phase honestly, but we cannot honestly measure a completion rate.
+ */
+const TRANSFER_STAGES = ['Authorising with your bank', 'Sending to the recipient', 'Confirming receipt'];
 
 const emptyDraft: Draft = {
   recipientName: '',
@@ -663,6 +672,8 @@ export default function TransferPage() {
   const [channel, setChannel] = useState<'sms' | 'authenticator'>('sms');
   const [resendIn, setResendIn] = useState(30);
   const [processing, setProcessing] = useState(false);
+  /** Which transfer stage we are genuinely at, or null when idle. */
+  const [transferStage, setTransferStage] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<{ ref: string; at: string } | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -695,16 +706,31 @@ export default function TransferPage() {
     return null;
   };
 
-  const submit = () => {
-    setProcessing(true);
-    window.setTimeout(() => {
-      setReceipt({ ref: uid('TXN-').toUpperCase(), at: new Date().toISOString() });
-      setProcessing(false);
-      setOtp('');
-      setStepIdx(STEPS.length);
-      toast.success('Transfer sent', `${money(draft.amount)} is on its way to ${draft.recipientName}.`);
-    }, 900);
-  };
+  /**
+ * Submit the transfer.
+ *
+ * The prototype has no network, so this walks the *named* stages a real bank
+ * transfer passes through rather than showing an invented percentage. The stages
+ * are the honest model: we are telling the user what is happening, not claiming
+ * a completion rate we cannot measure.
+ */
+const submit = () => {
+  setProcessing(true);
+  setTransferStage(0);
+  const timers = [
+    window.setTimeout(() => setTransferStage(1), 700),
+    window.setTimeout(() => setTransferStage(2), 1400),
+  ];
+  window.setTimeout(() => {
+    timers.forEach(window.clearTimeout);
+    setReceipt({ ref: uid('TXN-').toUpperCase(), at: new Date().toISOString() });
+    setTransferStage(null);
+    setProcessing(false);
+    setOtp('');
+    setStepIdx(STEPS.length);
+    toast.success('Transfer sent', `${money(draft.amount)} is on its way to ${draft.recipientName}.`);
+  }, 2200);
+};
 
   const handleNext = () => {
     const problem = validate();
@@ -868,7 +894,27 @@ export default function TransferPage() {
   );
 
   return (
-    <PageWrap>
+    <>
+      {/*
+        The in-flight state overlays the form rather than replacing it, so the
+        user can still see the transfer they are authorising.
+      */}
+      {processing ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-surface/80 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white shadow-lift">
+            <TransferLoader
+              stages={TRANSFER_STAGES.map((label, i): LoaderStage => ({
+                label,
+                status: i < (transferStage ?? 0) ? 'complete' : i === (transferStage ?? 0) ? 'active' : 'pending',
+              }))}
+              amount={money(total)}
+              recipient={draft.recipientName}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <PageWrap>
       <PageHeader
         eyebrow="Payments"
         title="Send money"
@@ -1009,6 +1055,7 @@ export default function TransferPage() {
           </div>
         </div>
       </Modal>
-    </PageWrap>
+      </PageWrap>
+    </>
   );
 }
