@@ -79,7 +79,7 @@ export default function HomePage() {
             <div className="relative flex justify-center lg:justify-end">
               <div className="relative">
                 <div className="animate-float">
-                  <PaybackCard3D card={heroCard} size="lg" float={false} />
+                  <PaybackCard3D card={heroCard} size="md" float={false} />
                 </div>
 
                 <div className="absolute -left-6 top-10 hidden rounded-2xl border border-white/10 bg-white/10 p-3.5 backdrop-blur sm:block">
@@ -613,7 +613,7 @@ export default function HomePage() {
             <div className="flex justify-center">
               <div className="relative">
                 <div className="animate-float">
-                  <PaybackCard3D card={paybackCards[2]} size="lg" />
+                  <PaybackCard3D card={paybackCards[2]} size="md" />
                 </div>
                 <div className="absolute -bottom-6 -left-6 hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3.5 py-2.5 backdrop-blur sm:flex">
                   <ShieldCheck className="h-4 w-4 text-emerald-300" aria-hidden />

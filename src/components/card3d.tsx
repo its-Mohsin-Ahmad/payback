@@ -529,13 +529,15 @@ export function PaybackCard3D({
     /* `relative` anchors the accent glow above; `pb-contact-shadow` was the black
        drop shadow and has been dropped in favour of the tinted halo.
 
-       The width is a cap rather than a fixed size: a hard 340px could not fit a
-       narrow phone viewport and forced the page into a horizontal scroll. The
-       card now shrinks to whatever the container allows, up to its designed
-       width, so it is never the thing that overflows the section. */
+       The width is the card's designed size, capped at the container width.
+       `width: 100%` was tried here to stop narrow viewports overflowing, but it
+       makes the card shrink-wrap its parent instead of rendering at its
+       designed width — which silently shrank the hero and footer cards on the
+       homepage. `maxWidth: '100%'` achieves the same cap without that side
+       effect, and the carousel additionally caps each track item. */
     <div
       className={cn('relative select-none', className)}
-      style={{ width: '100%', maxWidth: cfg.width }}
+      style={fill ? { width: '100%', maxWidth: cfg.width } : { width: cfg.width, maxWidth: '100%' }}
     >
       {/* Ambient glow tinted with the card's own accent. This replaces the black
           drop shadow (`pb-contact-shadow` plus the slate contact band), which
