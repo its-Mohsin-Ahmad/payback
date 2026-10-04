@@ -164,11 +164,12 @@ export default function CardsPage() {
           showPan={showPan}
           className="mt-4"
         />
-        {/* A soft floor behind the cards gives the row a surface to sit on, so
-            the contact shadows have something to fall across instead of
-            floating over a flat gradient. */}
+        {/* A soft floor under the row gives the contact shadows a surface to fall
+            across instead of floating on a flat gradient. No `blur` here: a
+            blurred, rounded element overflows its box and re-introduced the
+            horizontal page scroll the track is meant to avoid. */}
         <div
-          className="pointer-events-none -mt-24 h-24 rounded-[50%] bg-gradient-to-b from-transparent via-slate-900/[0.07] to-transparent blur-xl"
+          className="pointer-events-none mx-auto h-6 w-2/3 rounded-[50%] bg-slate-900/[0.06]"
           aria-hidden
         />
       </section>

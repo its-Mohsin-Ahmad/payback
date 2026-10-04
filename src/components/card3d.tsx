@@ -524,10 +524,13 @@ export function PaybackCard3D({
       style={fill ? { width: '100%', maxWidth: cfg.width } : { width: cfg.width, maxWidth: '100%' }}
     >
       <div className="relative" style={{ perspective: '1400px' }}>
-        {/* Contact shadow that shifts with the tilt */}
+        {/* Contact shadow that shifts with the tilt. A blurred element paints well
+            outside its own box, which made the card row exceed the track and put
+            the page into a horizontal scroll, so the soft edge is achieved with
+            a gradient inside a fixed-size band instead. */}
         <div
-          className="pointer-events-none absolute inset-x-4 rounded-[24px] bg-slate-900/25 blur-xl"
-          style={{ transform: `translateY(${18 + tilt.rx * 1.6}px) scale(${1 - tilt.rx * 0.006})`, filter: 'blur(18px)' }}
+          className="pointer-events-none absolute inset-x-6 bottom-0 h-8 rounded-[50%] bg-gradient-to-t from-slate-900/25 to-transparent"
+          style={{ transform: `translateY(${10 + tilt.rx * 1.6}px) scaleX(${1 - tilt.rx * 0.006})` }}
           aria-hidden
         />
 
@@ -757,7 +760,10 @@ export function CardCarousel({
   };
 
   return (
-    <div className={className}>
+    /* `overflow-hidden` keeps the wide contact shadows and the edge fades
+       inside the track's own box. Without it those shadows bled past the
+       section border and pushed the page into a horizontal scroll. */
+    <div className={cn('relative overflow-hidden', className)}>
       <div
         ref={trackRef}
         onScroll={onScroll}
@@ -793,26 +799,29 @@ export function CardCarousel({
           return (
             <div
               key={card.id}
-              className="snap-center shrink-0 transition-[transform,opacity,filter] duration-500 ease-out"
+              /* Deliberately no `filter`. A CSS blur on a scaled neighbour expands
+                 its paint area past the track's box, which is what pushed the page
+                 into a horizontal scroll. Depth is carried by scale and opacity
+                 alone. */
+              className="snap-center shrink-0 transition-[transform,opacity] duration-500 ease-out"
               style={{
-                transform: `scale(${1 - depth * 0.045})`,
-                opacity: 1 - depth * 0.16,
-                /* A touch of blur on the outermost cards reads as depth of field;
-                   saturation is left alone so card colours stay true. */
-                filter: depth === 0 ? 'none' : `blur(${depth * 0.6}px)`,
+                transform: `scale(${1 - depth * 0.05})`,
+                opacity: 1 - depth * 0.18,
               }}
             >
               <PaybackCard3D
                 card={card}
                 size={size}
                 showPan={showPan}
-                /* Selection is driven by activation, never by the flip. This
-                   updates `index`, reports the new active card and centres it. */
+                /* Selection is driven by activation. This updates `index`, reports
+                   the new active card and centres it. */
                 onActivate={() => emit(i)}
-                /* Tapping a card in the carousel selects it. Flipping stays on
-                   the explicit control so a tap never rotates the card out from
-                   under the pointer mid-scroll. */
-                flipOnActivate={false}
+                /* Clicking a card flips it to its back, which is what a physical
+                   card does. It used to be disabled here so a tap only selected,
+                   and clicking a card appeared to do nothing — the face never
+                   changed and the user had to find the small "View back" button
+                   underneath to turn it over. */
+                flipOnActivate
                 flipLabel={i === index}
               />
               {/* Only the centred card is named. Labelling all six stacked the
@@ -830,7 +839,19 @@ export function CardCarousel({
             </div>
           );
         })}
-      </div>
+        </div>
+
+        {/* Edge fades — a card running off the side is masked instead of being
+            cut in half at a hard edge. `pointer-events-none` so they never
+            intercept the swipe or a click on the card underneath. */}
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-slate-50 to-transparent sm:w-20"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-slate-50 to-transparent sm:w-20"
+          aria-hidden
+        />
 
       {/* Controls — every dot is tinted with its own card colour, so the button
           always matches the card it reveals. */}
