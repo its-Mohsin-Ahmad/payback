@@ -213,20 +213,27 @@ export function ActionGrid({
   className?: string;
 }) {
   return (
-    <div className={cn('grid grid-cols-4 gap-2 sm:gap-3', className)}>
+    /* Two columns on a phone, four from `sm` (spec §25). Four across a 320px
+       screen left each tile ~64px wide, which forced labels onto three lines
+       and made the tap targets unreliable. */
+    <div className={cn('grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3', className)}>
       {items.map((item) => (
         <Link
           key={item.label}
           to={item.to}
-          className="focus-ring group flex flex-col items-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-3 text-center shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lift"
+          className="focus-ring group flex min-h-[84px] flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-3 text-center shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card"
         >
           <span
-            className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
             style={{ backgroundColor: `${item.tone}1a`, color: item.tone }}
           >
             <Icon name={item.icon} className="h-5 w-5" />
           </span>
-          <span className="text-[11px] font-semibold leading-tight text-slate-700 sm:text-xs">{item.label}</span>
+          {/* Labels wrap rather than truncate — a two-word action must stay
+              legible at the largest OS text size (spec §195). */}
+          <span className="text-balance text-[11px] font-semibold leading-tight text-slate-700 sm:text-xs">
+            {item.label}
+          </span>
         </Link>
       ))}
     </div>

@@ -269,8 +269,16 @@ export function CardFooter({ className, children }: { className?: string; childr
 /* Form controls                                                       */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Shared form-control classes.
+ *
+ * `text-base sm:text-sm` matters on a phone: iOS Safari zooms the viewport when
+ * a focused input's font is under 16px, which leaves the user zoomed in with the
+ * keyboard up and no obvious way back. 16px is the threshold; desktop drops back
+ * to 14px so the dense financial forms still fit their columns (spec §61, §97).
+ */
 const controlBase =
-  'focus-ring w-full rounded-xl border bg-white px-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors disabled:bg-slate-50 disabled:text-slate-500';
+  'focus-ring w-full rounded-xl border bg-white px-3.5 text-base text-slate-900 placeholder:text-slate-400 transition-colors disabled:bg-slate-50 disabled:text-slate-500 sm:text-sm';
 
 export function Field({
   label,

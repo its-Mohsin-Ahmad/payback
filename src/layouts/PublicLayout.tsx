@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ArrowRight, Facebook, Globe, Instagram, Linkedin, Lock, Mail, MapPin, Menu, Phone, ShieldCheck, Twitter, X } from 'lucide-react';
+import { ArrowRight, ChevronDown, Facebook, Globe, Instagram, Linkedin, Lock, Mail, MapPin, Menu, Phone, ShieldCheck, Twitter, X } from 'lucide-react';
 import { Brand } from '@/components/Brand';
 import { Button, DemoBanner } from '@/components/ui';
 import { publicNav } from '@/lib/nav';
@@ -48,6 +48,42 @@ const footerColumns = [
     ],
   },
 ];
+
+/**
+ * One footer column.
+ *
+ * Collapsed to a tappable header on a phone and expanded from `lg` (spec §107).
+ * A four-column footer stacked into one column is a ~40-link scroll on a 375px
+ * screen, which buries the rest of the page; accordions keep it to four rows.
+ *
+ * Implemented with a native `<details>`/`<summary>` pair so it works without
+ * JavaScript, is keyboard accessible, and needs no open/close state.
+ */
+function FooterColumn({ title, links }: { title: string; links: { label: string; to: string }[] }) {
+  return (
+    <details className="group border-b border-slate-200 py-1 lg:border-0 lg:py-0">
+      <summary className="focus-ring flex min-h-[48px] cursor-pointer list-none items-center justify-between py-3 text-sm font-bold text-slate-900 lg:pointer-events-none lg:py-0">
+        {title}
+        <ChevronDown
+          className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180 lg:hidden"
+          aria-hidden
+        />
+      </summary>
+      <ul className="space-y-1 pb-4 lg:mt-4 lg:space-y-2.5 lg:pb-0">
+        {links.map((link) => (
+          <li key={link.label}>
+            <Link
+              to={link.to}
+              className="focus-ring flex min-h-[44px] items-center rounded text-sm text-slate-500 transition-colors hover:text-emerald-700 lg:min-h-0"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
 
 export function PublicLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -193,18 +229,7 @@ export function PublicLayout() {
             </div>
 
             {footerColumns.map((col) => (
-              <div key={col.title}>
-                <h3 className="text-sm font-bold text-slate-900">{col.title}</h3>
-                <ul className="mt-4 space-y-2.5">
-                  {col.links.map((link) => (
-                    <li key={link.label}>
-                      <Link to={link.to} className="focus-ring rounded text-sm text-slate-500 transition-colors hover:text-emerald-700">
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <FooterColumn key={col.title} title={col.title} links={col.links} />
             ))}
           </div>
 
