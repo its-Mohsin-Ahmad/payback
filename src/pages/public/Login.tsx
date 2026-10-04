@@ -79,7 +79,7 @@ export default function LoginPage() {
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+                className="focus-ring min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900"
               />
             </label>
 
@@ -90,13 +90,13 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pr-11 text-sm text-slate-900"
+                  className="focus-ring min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 pr-11 text-sm text-slate-900"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="focus-ring absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-slate-400 hover:text-slate-700"
+                  className="focus-ring absolute right-1 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
                 </button>
@@ -108,7 +108,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => toast.info('Reset link', 'A password reset link would be emailed (demo).')}
-                className="focus-ring rounded-lg px-1 py-0.5 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+                className="focus-ring -my-2 inline-flex min-h-[44px] items-center rounded-lg px-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
               >
                 Forgot password?
               </button>
@@ -135,7 +135,10 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-slate-500">
               New to PAYBACK?{' '}
-              <Link to="/register" className="focus-ring rounded font-semibold text-emerald-600 hover:text-emerald-700">
+              <Link
+                to="/register"
+                className="focus-ring -my-2 inline-flex min-h-[44px] items-center rounded font-semibold text-emerald-600 hover:text-emerald-700"
+              >
                 Open an account
               </Link>
             </p>

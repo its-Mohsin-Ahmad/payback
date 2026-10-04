@@ -72,14 +72,17 @@ export function AccountSwitcher() {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Banking context: ${label}. Switch banking`}
-        className={`focus-ring inline-flex min-h-[36px] max-w-[6.5rem] xs:max-w-[11rem] items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold transition-colors ${
+        className={`focus-ring inline-flex min-h-[44px] max-w-[6.5rem] xs:max-w-[11rem] items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold transition-colors ${
           isBusiness
             ? 'border-slate-300 bg-slate-900 text-white hover:bg-slate-800'
             : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300'
         }`}
       >
         <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        <span className="truncate">{label}</span>
+        {/* Below `sm` the app bar needs the width for the page title, which was
+            truncating to "C..". The control collapses to icon + chevron and
+            keeps its accessible name from `aria-label` on the button. */}
+        <span className="hidden truncate sm:inline">{label}</span>
         <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
 

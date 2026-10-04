@@ -97,7 +97,7 @@ export default function BusinessPage() {
               </div>
             ))}
           </div>
-          <Link to="/business/app/approvals" className="focus-ring mt-6 inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+          <Link to="/business/app/approvals" className="focus-ring mt-6 inline-flex min-h-[44px] items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
             See the approvals queue <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>

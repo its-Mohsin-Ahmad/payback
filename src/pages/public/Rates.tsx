@@ -71,7 +71,7 @@ export default function RatesPage() {
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="focus-ring tnum w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm"
+                  className="focus-ring tnum min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm"
                 />
               </label>
               <label className="block">
@@ -79,7 +79,7 @@ export default function RatesPage() {
                 <select
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
-                  className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm"
+                  className="focus-ring min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm"
                 >
                   {CURRENCIES.filter((c) => c !== 'USD').map((c) => (
                     <option key={c} value={c}>

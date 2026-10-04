@@ -25,7 +25,7 @@ export function CardSelector({
     <div
       role="tablist"
       aria-label="Choose a card design"
-      className="grid-tight -mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid-cols-3 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden"
+      className="mx-0 flex grid-cols-3 gap-2"
     >
       {variants.map((v, i) => {
         const active = i === index;
@@ -37,7 +37,7 @@ export function CardSelector({
             aria-selected={active}
             onClick={() => onIndexChange(i)}
             className={cn(
-              'focus-ring group flex min-h-[64px] min-w-[124px] shrink-0 snap-start items-center gap-3 rounded-2xl border bg-white px-3 text-left transition-all duration-200 motion-reduce:transition-none',
+              'focus-ring group flex min-h-[64px] min-w-0 items-center gap-2 rounded-2xl border bg-white px-2 text-left transition-all duration-200 motion-reduce:transition-none',
               active
                 ? 'border-emerald-400 shadow-card ring-1 ring-emerald-500/25'
                 : 'border-slate-200 hover:border-slate-300 hover:shadow-card',
@@ -45,11 +45,11 @@ export function CardSelector({
           >
             {/* Miniature card, same 1.586 ratio as the hero. */}
             <span
-              className="h-9 w-[1.586rem] shrink-0 rounded-[5px] shadow-sm ring-1 ring-black/5"
+              className="h-8 w-[1.45rem] shrink-0 rounded-[5px] shadow-sm ring-1 ring-black/5"
               style={{ backgroundImage: v.card.identity.base }}
               aria-hidden
             />
-            <span className="min-w-0">
+            <span className="min-w-0 flex-1">
               <span
                 className={cn(
                   'block truncate text-[13px] font-bold',

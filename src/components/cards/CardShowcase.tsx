@@ -176,7 +176,7 @@ export function CardShowcase({
           type="button"
           onClick={() => go(index - 1)}
           aria-label="Previous card"
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
         >
           <ChevronLeft className="h-5 w-5" aria-hidden />
         </button>
@@ -193,7 +193,7 @@ export function CardShowcase({
                 aria-label={`Show ${v.label}`}
                 onClick={() => go(i)}
                 className={cn(
-                  'focus-ring flex h-11 min-w-[24px] items-center justify-center rounded-full outline-none',
+                  'focus-ring flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full outline-none',
                   'focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2',
                 )}
               >
@@ -214,7 +214,7 @@ export function CardShowcase({
           type="button"
           onClick={() => go(index + 1)}
           aria-label="Next card"
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
         >
           <ChevronRight className="h-5 w-5" aria-hidden />
         </button>

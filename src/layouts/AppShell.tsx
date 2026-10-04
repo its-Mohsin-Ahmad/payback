@@ -209,7 +209,7 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
 
             <Link
               to={variant === 'business' ? '/business/app/approvals' : '/app/notifications'}
-              className="focus-ring relative rounded-xl p-2.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              className="focus-ring relative inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700"
               aria-label="Notifications"
             >
               <Bell className="h-5 w-5" aria-hidden />

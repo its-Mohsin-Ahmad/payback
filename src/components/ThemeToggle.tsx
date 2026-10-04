@@ -26,7 +26,7 @@ export function ThemeToggle({ className }: { className?: string }) {
             aria-checked={current === option}
             onClick={() => updatePreferences({ theme: option })}
             className={cn(
-              'focus-ring min-h-[38px] rounded-lg px-3 text-xs font-semibold capitalize transition-colors',
+              'focus-ring min-h-[44px] rounded-lg px-3 text-xs font-semibold capitalize transition-colors',
               current === option
                 ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800',

@@ -69,7 +69,7 @@ export default function BusinessDashboardPage() {
             </Badge>
             <Link
               to="/business/app/approvals"
-              className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-emerald-600"
+              className="focus-ring inline-flex h-11 items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-emerald-600"
             >
               Approvals
               {pendingApprovals.length > 0 ? (
@@ -95,7 +95,7 @@ export default function BusinessDashboardPage() {
             title="Cash flow"
             subtitle="Inflow vs outflow — last six months"
             action={
-              <Link to="/business/app/cashflow" className="focus-ring rounded-lg px-2 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
+              <Link to="/business/app/cashflow" className="focus-ring inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
                 Details
               </Link>
             }
@@ -119,7 +119,7 @@ export default function BusinessDashboardPage() {
               title="Awaiting approval"
               subtitle={`${pendingApprovals.length} items need you`}
               action={
-                <Link to="/business/app/approvals" className="focus-ring rounded-lg px-2 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
+                <Link to="/business/app/approvals" className="focus-ring inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
                   Review
                 </Link>
               }
@@ -154,7 +154,7 @@ export default function BusinessDashboardPage() {
           title="Invoices needing attention"
           description="Oldest first — chase before they age."
           action={
-            <Link to="/business/app/invoices" className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
+            <Link to="/business/app/invoices" className="focus-ring inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
               All invoices <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           }
@@ -175,7 +175,7 @@ export default function BusinessDashboardPage() {
                 <p className="tnum text-sm font-bold text-slate-900">{money(invoice.amount, invoice.currency, { decimals: false })}</p>
                 <Link
                   to="/business/app/invoices"
-                  className="focus-ring inline-flex h-8 items-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+                  className="focus-ring inline-flex h-11 items-center rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
                 >
                   Chase
                 </Link>
@@ -189,7 +189,7 @@ export default function BusinessDashboardPage() {
         <SectionTitle
           title="Accounts"
           action={
-            <Link to="/business/app/accounts" className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
+            <Link to="/business/app/accounts" className="focus-ring inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
               Manage <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           }

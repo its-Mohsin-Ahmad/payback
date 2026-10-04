@@ -61,7 +61,7 @@ const footerColumns = [
  */
 function FooterColumn({ title, links }: { title: string; links: { label: string; to: string }[] }) {
   return (
-    <details className="group border-b border-slate-200 py-1 lg:border-0 lg:py-0">
+    <details className="group border-b border-slate-200 lg:border-0 lg:py-0">
       <summary className="focus-ring flex min-h-[48px] cursor-pointer list-none items-center justify-between py-3 text-sm font-bold text-slate-900 lg:pointer-events-none lg:py-0">
         {title}
         <ChevronDown
@@ -104,7 +104,7 @@ export function PublicLayout() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <div className="bg-navy px-4 py-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-white/70">
-        Prototype demonstration &mdash; synthetic data only, not a live banking service
+        <span className="sm:hidden">Demo &mdash; synthetic data only</span><span className="hidden sm:inline">Prototype demonstration &mdash; synthetic data only, not a live banking service</span>
       </div>
 
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-md">
@@ -194,7 +194,7 @@ export function PublicLayout() {
 
       <footer className="mt-16 border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-content px-4 py-14 sm:px-6 lg:px-8">
-          <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:gap-10">
             <div>
               <Brand />
               <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">

@@ -78,7 +78,7 @@ export default function DashboardPage() {
           </Button>
           <Link
             to="/app/transfer"
-            className="focus-ring inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-emerald-600"
+            className="focus-ring inline-flex h-11 items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-emerald-600"
           >
             <Send className="h-4 w-4" aria-hidden />
             Send money
@@ -150,7 +150,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                <Link to="/app/rewards" className="focus-ring rounded-lg px-2 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
+                <Link to="/app/rewards" className="focus-ring inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
                   Redeem
                 </Link>
               </div>
@@ -170,7 +170,7 @@ export default function DashboardPage() {
           title={`${user.preferredName || user.firstName}'s accounts`}
           description="Balances update in real time — demo data."
           action={
-            <Link to="/app/accounts" className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
+            <Link to="/app/accounts" className="focus-ring inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
               View all <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           }
@@ -212,7 +212,7 @@ export default function DashboardPage() {
             title="Recent transactions"
             subtitle="Your latest account activity"
             action={
-              <Link to="/app/transactions" className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
+              <Link to="/app/transactions" className="focus-ring inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
                 View all <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             }
@@ -231,7 +231,7 @@ export default function DashboardPage() {
             <CardHeader
               title="Notifications"
               action={
-                <Link to="/app/notifications" className="focus-ring rounded-lg px-2 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
+                <Link to="/app/notifications" className="focus-ring inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
                   View all
                 </Link>
               }
@@ -261,7 +261,7 @@ export default function DashboardPage() {
               </p>
               <Link
                 to="/app/security"
-                className="focus-ring inline-flex items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
+                className="focus-ring inline-flex min-h-[44px] items-center gap-1 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
               >
                 Open Security Centre <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </Link>

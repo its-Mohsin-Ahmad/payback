@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Flashlight, HelpCircle, ImageUp, ScanLine, ShieldCheck, X } from 'lucide-react';
 import { Badge, Button, useToast } from '@/components/ui';
 import { clampLoaderDuration, LoaderAnnouncer } from '@/components/loaders';
@@ -275,7 +275,7 @@ export function QrScanner({
             type="button"
             onClick={onClose}
             aria-label="Close scanner"
-            className="focus-ring rounded-xl bg-white/10 p-2 text-white/80 hover:bg-white/20"
+            className="focus-ring inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-white/10 text-white/80 hover:bg-white/20"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
@@ -359,7 +359,7 @@ export function QrScanner({
                 key={sample.id}
                 type="button"
                 onClick={() => handleRaw(sample.raw)}
-                className="focus-ring rounded-lg bg-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-white/80 transition-colors hover:bg-white/20"
+                className="focus-ring inline-flex min-h-[44px] items-center rounded-lg bg-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-white/80 transition-colors hover:bg-white/20"
               >
                 {sample.label}
               </button>
@@ -367,7 +367,7 @@ export function QrScanner({
             <button
               type="button"
               onClick={() => handleRaw('https://example.com/pay/unsupported')}
-              className="focus-ring rounded-lg bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold text-white/50 transition-colors hover:bg-white/15"
+              className="focus-ring inline-flex min-h-[44px] items-center rounded-lg bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold text-white/50 transition-colors hover:bg-white/15"
             >
               Unsupported code
             </button>

@@ -199,9 +199,9 @@ export default function SecurityPage() {
         }
       >
         <div className="space-y-4">
-          <input type="password" placeholder="Current password" className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm" />
-          <input type="password" placeholder="New password" className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm" />
-          <input type="password" placeholder="Confirm new password" className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm" />
+          <input type="password" placeholder="Current password" className="focus-ring min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm" />
+          <input type="password" placeholder="New password" className="focus-ring min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm" />
+          <input type="password" placeholder="Confirm new password" className="focus-ring min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm" />
           <Alert tone="warning" title="Demo only">No password is stored — this form validates locally and resets.</Alert>
         </div>
       </Modal>

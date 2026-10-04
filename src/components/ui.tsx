@@ -1,4 +1,4 @@
-import {
+﻿import {
   Children,
   cloneElement,
   createContext,
@@ -78,6 +78,13 @@ export function Button({
       type={type}
       className={cn(
         'focus-ring inline-flex items-center justify-center whitespace-nowrap transition-colors duration-150',
+        /*
+         * Touch floor. `buttonSizes` gives a 36px "sm" and 40px "md" button,
+         * which is correct for pointer-driven desktop but too small for a thumb.
+         * Below `sm` every button is forced to 44px; `sm:min-h-0` hands control
+         * back to the size scale so desktop density is unchanged.
+         */
+        'min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0',
         'disabled:cursor-not-allowed',
         buttonVariants[variant],
         buttonSizes[size],
@@ -448,14 +455,24 @@ export function Toggle({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          'focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
-          checked ? 'bg-emerald-500' : 'bg-slate-300',
+          /* A 44px-tall button wrapping a 24px pill. The track stays the
+           * familiar switch size; the extra height is pure tap target, centred
+           * by `items-center`, so nothing shifts visually. */
+          'focus-ring relative inline-flex h-11 w-11 shrink-0 items-center justify-center',
           disabled && 'cursor-not-allowed opacity-50'
         )}
       >
         <span
-          className={cn('inline-block h-[18px] w-[18px] rounded-full bg-white shadow transition-transform', checked ? 'translate-x-[22px]' : 'translate-x-[3px]')}
-        />
+          aria-hidden
+          className={cn(
+            'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors',
+            checked ? 'bg-emerald-500' : 'bg-slate-300'
+          )}
+        >
+          <span
+            className={cn('inline-block h-[18px] w-[18px] rounded-full bg-white shadow transition-transform', checked ? 'translate-x-[22px]' : 'translate-x-[3px]')}
+          />
+        </span>
       </button>
     </div>
   );
@@ -1003,7 +1020,18 @@ export function SegmentedControl<T extends string>({
     <div
       role="tablist"
       className={cn(
-        'no-scrollbar flex w-full max-w-full items-center gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 sm:w-auto',
+        /*
+         * Five filter tabs cannot fit a 320px screen, so this scrolls. Two things
+         * turn that from "the page is broken" into "this is a filter strip":
+         *
+         *   1. `snap-x`/`snap-start` make it behave like a carousel — a tab lands
+         *      flush at the edge instead of stopping mid-word.
+         *   2. The edge mask fades the last visible tab, signalling more content.
+         *
+         * `mask-image` is paired with the WebKit prefix for Safari, which still
+         * requires the unprefixed property.
+         */
+        'pb-segmented no-scrollbar flex w-full max-w-full snap-x snap-mandatory items-center gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 [mask-image:linear-gradient(to_right,#000_calc(100%-1.5rem),transparent)] [-webkit-mask-image:linear-gradient(to_right,#000_calc(100%-1.5rem),transparent)] sm:w-auto sm:[mask-image:none] sm:[-webkit-mask-image:none]',
         className,
       )}
     >
@@ -1017,8 +1045,10 @@ export function SegmentedControl<T extends string>({
             aria-selected={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              'focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-lg font-semibold transition-colors',
-              size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3 py-1.5 text-sm',
+              'focus-ring inline-flex min-h-[44px] min-w-[44px] shrink-0 snap-start items-center gap-1.5 rounded-lg font-semibold transition-colors',
+              /* Tighter inline padding below `sm` buys roughly one extra tab on
+                 a phone without making the target too small to hit. */
+              size === 'sm' ? 'px-2 py-1 text-xs' : 'px-2.5 py-1.5 text-sm sm:px-3',
               active ? 'bg-white text-slate-900 shadow-soft' : 'text-slate-500 hover:text-slate-700'
             )}
           >

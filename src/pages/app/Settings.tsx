@@ -85,7 +85,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => setTheme(option.key)}
                     className={cn(
-                      'focus-ring inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-colors',
+                      'focus-ring inline-flex min-h-[44px] items-center gap-1.5 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-colors',
                       theme === option.key
                         ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
                         : 'border-slate-200 text-slate-600 hover:border-slate-300'

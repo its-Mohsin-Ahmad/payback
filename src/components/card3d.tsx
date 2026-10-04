@@ -946,7 +946,7 @@ export function CardCarousel({
           disabled={index === 0}
           aria-label="Previous card"
           title="Previous card"
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 disabled:pointer-events-none disabled:opacity-35"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 disabled:pointer-events-none disabled:opacity-35"
         >
           <ChevronLeft className="h-5 w-5" aria-hidden />
         </button>
@@ -988,7 +988,7 @@ export function CardCarousel({
           disabled={index === cards.length - 1}
           aria-label="Next card"
           title="Next card"
-          className="focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 disabled:pointer-events-none disabled:opacity-35"
+          className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-card transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 disabled:pointer-events-none disabled:opacity-35"
         >
           <ChevronRight className="h-5 w-5" aria-hidden />
         </button>

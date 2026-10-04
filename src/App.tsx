@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+﻿import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastProvider } from '@/components/ui';
 import { PublicLayout } from '@/layouts/PublicLayout';
 import { AppShell } from '@/layouts/AppShell';
@@ -58,6 +58,7 @@ import CorporateCardsPage from '@/pages/business/app/CorporateCards';
 import BusinessTeamPage from '@/pages/business/app/Team';
 import BusinessIntegrationsPage from '@/pages/business/app/Integrations';
 import BusinessProfilePage from '@/pages/business/app/Profile';
+import BusinessReportsPage from '@/pages/business/app/Reports';
 import BusinessSupportPage from '@/pages/business/app/Support';
 
 /* Admin platform */
@@ -158,6 +159,7 @@ export default function App() {
             <Route path="integrations" element={<BusinessIntegrationsPage />} />
             <Route path="profile" element={<BusinessProfilePage />} />
             <Route path="support" element={<BusinessSupportPage />} />
+            <Route path="reports" element={<BusinessReportsPage />} />
             <Route path="*" element={<Navigate to="/business/app" replace />} />
           </Route>
 

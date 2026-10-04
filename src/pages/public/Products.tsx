@@ -57,7 +57,7 @@ export default function ProductsPage() {
                 </span>
                 <p className="text-sm font-bold text-slate-900">{product.title}</p>
                 <p className="text-sm leading-relaxed text-slate-500">{product.body}</p>
-                <Link to={product.to} className="focus-ring inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                <Link to={product.to} className="focus-ring -my-3 inline-flex min-h-[44px] items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
                   Open account <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </CardBody>

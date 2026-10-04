@@ -169,7 +169,7 @@ export function AdminShell() {
                 <span className="block text-xs font-semibold text-slate-900">Hina Qureshi</span>
                 <span className="block text-[11px] text-slate-500">Compliance Officer</span>
               </span>
-              <Link to="/login" aria-label="Sign out" className="focus-ring rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-rose-600">
+              <Link to="/login" aria-label="Sign out" className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-rose-600">
                 <LogOut className="h-4 w-4" aria-hidden />
               </Link>
             </div>

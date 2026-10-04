@@ -51,7 +51,7 @@ export default function SecurityPage() {
                   </div>
                 ))}
               </div>
-              <Link to="/app/security" className="focus-ring mt-5 inline-flex items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/20">
+              <Link to="/app/security" className="focus-ring mt-5 inline-flex min-h-[44px] items-center gap-1.5 rounded-xl bg-white/10 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/20">
                 Open Security Centre <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </Link>
             </div>

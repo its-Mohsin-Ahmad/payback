@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { ArrowRight, Activity } from 'lucide-react';
 import { PageWrap } from '@/components/blocks';
 import { GroupedBarChart } from '@/components/charts';
@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
               title="Queues"
               subtitle="Work waiting on your team"
               action={
-                <Link to="/admin/kyc" className="focus-ring rounded-lg px-2 py-1 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
+                <Link to="/admin/kyc" className="focus-ring inline-flex min-h-[44px] items-center rounded-lg px-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50">
                   Open
                 </Link>
               }
@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
           title="Integration health"
           description="Latency and uptime of core rails."
           action={
-            <Link to="/admin/integrations" className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
+            <Link to="/admin/integrations" className="focus-ring inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
               Manage <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           }

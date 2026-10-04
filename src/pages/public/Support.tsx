@@ -42,7 +42,7 @@ export default function SupportPage() {
                   <p className="text-sm font-bold text-slate-900">{channel.name}</p>
                   <p className="text-xs text-slate-500">{channel.detail}</p>
                 </div>
-                <Link to="/app/support" className="focus-ring inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                <Link to="/app/support" className="focus-ring -my-3 inline-flex min-h-[44px] items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
                   {channel.action} <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </CardBody>

@@ -92,7 +92,20 @@ function findOverflow() {
 /** Runs in the page: interactive elements below the 44px touch floor. */
 function findSmallTargets() {
   const small = [];
-  const sel = 'a,button,[role="button"],input,select,textarea,label';
+  /*
+   * Filters, and each one is deliberate:
+   *   :not([disabled])  a disabled control cannot be tapped, so it is not a
+   *                     missed target — it is an intentionally inert one.
+   *   :not(.sr-only)    `sr-only` inputs are 1x1 by design for screen readers;
+   *                     they are not pointer targets and never receive a tap.
+   * `label` is excluded too: it only becomes a target when it wraps or points at
+   * a control, and in that case the control itself is already measured — counting
+   * the label double-reported every search field's caption ("Search", 16px tall)
+   * as a missed 44px target.
+   */
+  const sel =
+    'a:not([disabled]),button:not([disabled]),[role="button"],' +
+    'input:not([disabled]):not(.sr-only),select:not([disabled]),textarea:not([disabled])';
   for (const el of Array.from(document.querySelectorAll(sel))) {
     const style = getComputedStyle(el);
     if (style.display === 'none' || style.visibility === 'hidden') continue;

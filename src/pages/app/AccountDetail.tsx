@@ -160,7 +160,7 @@ export default function AccountDetailPage() {
           action={
             <Link
               to="/app/transactions"
-              className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-600 hover:bg-emerald-50"
+              className="focus-ring inline-flex min-h-[44px] items-center gap-1 rounded-lg px-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50"
             >
               View all <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
