@@ -44,6 +44,17 @@ function toneClasses(card: PaybackCard) {
   };
 }
 
+/**
+ * Appends an alpha channel to a hex colour.
+ *
+ * The ambient glow behind each card is tinted with that card's own accent, so
+ * the depth cue is coloured instead of the black drop shadow the cards used to
+ * carry. Black read as dirt against the light section background.
+ */
+function withAlpha(hex: string, alpha: string): string {
+  return /^#[0-9a-f]{6}$/i.test(hex) ? `${hex}${alpha}` : hex;
+}
+
 /* ------------------------------------------------------------------ */
 /* Card faces                                                          */
 /* ------------------------------------------------------------------ */
@@ -515,31 +526,43 @@ export function PaybackCard3D({
     : `rotateX(${tilt.rx}deg) rotateY(${tilt.ry + flipDeg}deg)`;
 
   return (
-    /* maxWidth keeps the card inside narrow grid columns while still using the
-       full designed width wherever there is room. `fill` drops the fixed width
-       entirely so the card stretches to its container — the inline width would
-       otherwise beat any width utility passed via className. */
+    /* `relative` anchors the accent glow above; `pb-contact-shadow` was the black
+       drop shadow and has been dropped in favour of the tinted halo.
+
+       The width is a cap rather than a fixed size: a hard 340px could not fit a
+       narrow phone viewport and forced the page into a horizontal scroll. The
+       card now shrinks to whatever the container allows, up to its designed
+       width, so it is never the thing that overflows the section. */
     <div
-      className={cn('select-none', className)}
-      style={fill ? { width: '100%', maxWidth: cfg.width } : { width: cfg.width, maxWidth: '100%' }}
+      className={cn('relative select-none', className)}
+      style={{ width: '100%', maxWidth: cfg.width }}
     >
+      {/* Ambient glow tinted with the card's own accent. This replaces the black
+          drop shadow (`pb-contact-shadow` plus the slate contact band), which
+          read as smudged dirt against the light section background and was the
+          main thing making the gallery look cheap. A coloured halo separates the
+          card from the page without darkening it.
+
+          Deliberately no `filter: blur()`: a blurred element paints outside its
+          own box and is what pushed the page into a horizontal scroll. The
+          radial gradient already falls off to transparent, so it is soft on its
+          own and stays inside the card's bounds. */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background: `radial-gradient(ellipse 78% 72% at 50% 62%, ${withAlpha(card.identity.accent, '4D')} 0%, ${withAlpha(card.identity.accent, '1F')} 45%, transparent 72%)`,
+          transform: `translateY(${12 + tilt.rx * 1.4}px) scale(${1 - Math.abs(tilt.rx) * 0.012})`,
+        }}
+        aria-hidden
+      />
       <div className="relative" style={{ perspective: '1400px' }}>
-        {/* Contact shadow that shifts with the tilt. A blurred element paints well
-            outside its own box, which made the card row exceed the track and put
-            the page into a horizontal scroll, so the soft edge is achieved with
-            a gradient inside a fixed-size band instead. */}
-        <div
-          className="pointer-events-none absolute inset-x-6 bottom-0 h-8 rounded-[50%] bg-gradient-to-t from-slate-900/25 to-transparent"
-          style={{ transform: `translateY(${10 + tilt.rx * 1.6}px) scaleX(${1 - tilt.rx * 0.006})` }}
-          aria-hidden
-        />
 
         <div
           ref={wrap}
           onPointerMove={onPointerMove}
           onPointerLeave={reset}
           className={cn(
-            'preserve-3d relative w-full rounded-2xl pb-contact-shadow transition-transform duration-500 ease-out motion-reduce:transition-none',
+            'preserve-3d relative w-full rounded-2xl transition-transform duration-500 ease-out motion-reduce:transition-none',
             interactive && 'cursor-pointer',
             float && !reduced && 'animate-float'
           )}
@@ -561,8 +584,9 @@ export function PaybackCard3D({
             <CardBack card={card} size={size} shine={shine} />
           </div>
 
-          {/* Glass edge highlight */}
-          <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/15" aria-hidden />
+          {/* Glass edge highlight — kept as a light ring rather than a dark shadow, so
+              the card keeps a defined boundary without a black halo. */}
+          <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/25" aria-hidden />
 
           {/* Explicit hit target — frontmost plane, covers both faces so the
               card is clickable everywhere regardless of flip state or which
@@ -665,13 +689,19 @@ export function CardCarousel({
    * cannot use, so the first and last card can still reach the centre instead of
    * being pinned against the edge of the scrollport.
    */
+  /* The card is fluid (capped at `cfg.width`), so the leftover space is measured
+     from the track itself rather than from the card's nominal width. A card on a
+     narrow viewport is narrower than `cfg.width`, and using the fixed number put
+     the first card off-centre and let the row overflow. */
   const [trackPad, setTrackPad] = useState(12);
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
     const measure = () => {
-      const spare = (el.clientWidth - cfg.width) / 2;
+      const card = el.firstElementChild as HTMLElement | null;
+      const cardW = card?.getBoundingClientRect().width || cfg.width;
+      const spare = (el.clientWidth - cardW) / 2;
       setTrackPad(Math.round(Math.max(12, spare)));
     };
     measure();
@@ -803,8 +833,15 @@ export function CardCarousel({
                  its paint area past the track's box, which is what pushed the page
                  into a horizontal scroll. Depth is carried by scale and opacity
                  alone. */
-              className="snap-center shrink-0 transition-[transform,opacity] duration-500 ease-out"
+              /* Width comes from the card's own cap, so the row is exactly as wide as the
+                 cards it holds and never wider than the track. `w-full` lets the
+                 card shrink on a narrow viewport instead of forcing overflow. */
+              className="w-full max-w-full shrink-0 snap-center transition-[transform,opacity] duration-500 ease-out"
+              /* `width: min(cfg.width, 100%)` gives each item its designed size on a wide
+                 screen while letting it shrink below that on a narrow one, so a
+                 single card can never be wider than the track it scrolls in. */
               style={{
+                width: `min(${cfg.width}px, 100%)`,
                 transform: `scale(${1 - depth * 0.05})`,
                 opacity: 1 - depth * 0.18,
               }}

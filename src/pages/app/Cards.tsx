@@ -164,14 +164,8 @@ export default function CardsPage() {
           showPan={showPan}
           className="mt-4"
         />
-        {/* A soft floor under the row gives the contact shadows a surface to fall
-            across instead of floating on a flat gradient. No `blur` here: a
-            blurred, rounded element overflows its box and re-introduced the
-            horizontal page scroll the track is meant to avoid. */}
-        <div
-          className="pointer-events-none mx-auto h-6 w-2/3 rounded-[50%] bg-slate-900/[0.06]"
-          aria-hidden
-        />
+        {/* The row's depth now comes from the per-card accent halo, so the old dark
+            floor blob is gone — it read as a grey smudge under the cards. */}
       </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
