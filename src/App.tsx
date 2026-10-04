@@ -78,7 +78,21 @@ import AdminSettingsPage from '@/pages/admin/Settings';
 export default function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
+      {/*
+        `basename` is required, not decorative.
+
+        The production build is served from the `/payback/` sub-path (see
+        `base` in vite.config.ts). Without this, React Router treats the full
+        pathname — `/payback/app/cards` — as the route path, matches no
+        `<Route path="app/cards">`, and falls through to the catch-all
+        `<Navigate to="/" replace />`. The observable symptom was that opening
+        or reloading *any* deep link bounced the user to the marketing homepage
+        instead of the page they asked for.
+
+        `import.meta.env.BASE_URL` resolves to `/payback/` in a production build
+        and `/` under `vite dev`, so the same code works in both.
+      */}
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Routes>
           {/* ---------------- Public website ---------------- */}
           <Route element={<PublicLayout />}>

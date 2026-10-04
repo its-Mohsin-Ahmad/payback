@@ -88,6 +88,21 @@
     }
   }
 
+  /*
+   * Grid/flex blowout reset.
+   *
+   * Grid and flex children default to `min-width: auto`, so a child refuses to
+   * shrink below its widest content and pushes the whole page sideways. Measured
+   * at 320px: a 353px card in a 288px column (Profile), 385px on the business
+   * dashboard, 375px on the personal dashboard.
+   *
+   * `:where()` keeps specificity at zero, so this never outranks an explicit
+   * `min-w-*` a component sets deliberately.
+   */
+  :where(.grid) > * {
+    min-width: 0;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
@@ -183,6 +198,14 @@
 @layer components {
   .card-base {
     @apply rounded-2xl border border-slate-200/80 bg-white shadow-card;
+    /*
+     * Grid and flex children default to `min-width: auto`, which means they
+     * refuse to shrink below their widest content. A card holding a long value
+     * therefore forced its column wider than the viewport — measured at 500px
+     * inside a 320px screen on the Security Centre. `min-width: 0` lets the card
+     * shrink and lets its own text wrap instead.
+     */
+    min-width: 0;
   }
 
   .focus-ring {

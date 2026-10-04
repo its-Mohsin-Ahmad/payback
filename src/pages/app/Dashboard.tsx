@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, EyeOff, Gift, Send } from 'lucide-react';
 import { AccountCard, ActionGrid, ListShell, TransactionRow } from '@/components/blocks';
@@ -91,7 +91,7 @@ export default function DashboardPage() {
       {/* Hero balance card */}
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-3xl bg-navy p-5 text-white shadow-lift navy-mesh sm:p-6 lg:col-span-2">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-white/50">Total balance</p>
               <p className="tnum mt-2 text-3xl font-bold tracking-tight sm:text-4xl">

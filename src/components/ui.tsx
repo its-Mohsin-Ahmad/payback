@@ -989,7 +989,24 @@ export function SegmentedControl<T extends string>({
   className?: string;
 }) {
   return (
-    <div role="tablist" className={cn('no-scrollbar inline-flex items-center gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1', className)}>
+    /*
+     * `w-full ... sm:w-auto` is what makes the horizontal scroll work at all.
+     *
+     * An `inline-flex` sizes itself to its content, so `overflow-x-auto` never
+     * engaged — the control simply grew wider than the screen and pushed the
+     * *page* sideways (measured: +334px on Notifications, +108px on
+     * Transactions, +136px on the products page at 320px).
+     *
+     * Constraining it to the parent's width lets the tabs scroll inside it on a
+     * phone, while the control still fits its content on wider screens.
+     */
+    <div
+      role="tablist"
+      className={cn(
+        'no-scrollbar flex w-full max-w-full items-center gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1 sm:w-auto',
+        className,
+      )}
+    >
       {options.map((o) => {
         const active = o.value === value;
         return (

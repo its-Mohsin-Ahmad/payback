@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Real-browser responsive audit.
  *
  * Everything else in this project verified layout by *reading* CSS. That is not
@@ -124,33 +124,58 @@ const page = await browser.newPage();
 await page.setCacheEnabled(false);
 
 for (const width of WIDTHS) {
+  await page.setViewport({ width, height: 900, deviceScaleFactor: 1, isMobile: width < 768, hasTouch: width < 768 });
+
+  /* Load the shell once, then move between routes in-app.
+   *
+   * A direct `goto()` of a deep link hits the GitHub Pages 404 handler, which
+   * bounces to `/payback/` — so every route silently rendered the *homepage*
+   * and the audit passed while testing nothing. The first version of this
+   * script had exactly that bug. Client-side navigation plus the route guard
+   * below is what makes the result mean anything. */
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle2', timeout: 20000 });
+  await new Promise((r) => setTimeout(r, 1500));
+
   for (const route of ROUTES) {
-    await page.setViewport({ width, height: 900, deviceScaleFactor: 1, isMobile: width < 768, hasTouch: width < 768 });
-    try {
-      await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle2', timeout: 20000 });
-    } catch {
-      problems.push({ width, route, kind: 'NAV', detail: 'failed to load' });
+    await page.evaluate((r) => {
+      window.history.pushState({}, '', `/payback${r}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }, route);
+    await new Promise((r) => setTimeout(r, 900));
+
+    const info = await page.evaluate(() => ({
+      path: location.pathname,
+      heading: (document.querySelector('h1')?.textContent ?? document.querySelector('h2')?.textContent ?? '')
+        .trim()
+        .slice(0, 46),
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+
+    /* Guard: if the route did not actually take effect we are looking at the
+       previous page, and any measurement would be meaningless. */
+    if (!info.path.endsWith(route)) {
+      problems.push({ width, route, kind: 'ROUTING', detail: `navigation did not take (still at ${info.path})` });
       continue;
     }
-    // Let the boot loader clear and lazy content settle.
-    await new Promise((r) => setTimeout(r, 1400));
 
-    const result = await page.evaluate(findOverflow);
-    const scrolls = result.scrollWidth > result.clientWidth + 1;
-
+    const scrolls = info.scrollWidth > info.clientWidth + 1;
     if (scrolls) {
+      const offenders = (await page.evaluate(findOverflow)).offenders;
       problems.push({
         width,
         route,
         kind: 'H-SCROLL',
-        detail: `scrollWidth ${result.scrollWidth} > clientWidth ${result.clientWidth} (by ${result.scrollWidth - result.clientWidth}px)`,
-        offenders: result.offenders,
+        detail: `scrollWidth ${info.scrollWidth} > clientWidth ${info.clientWidth} (by ${info.scrollWidth - info.clientWidth}px) — "${info.heading}"`,
+        offenders,
       });
     }
 
-    const small = await page.evaluate(findSmallTargets);
-    if (small.length && width < 500) {
-      problems.push({ width, route, kind: 'TOUCH', detail: `${small.length} target(s) under 44px`, offenders: small });
+    if (width < 500) {
+      const small = await page.evaluate(findSmallTargets);
+      if (small.length) {
+        problems.push({ width, route, kind: 'TOUCH', detail: `${small.length} target(s) under 44px — "${info.heading}"`, offenders: small });
+      }
     }
   }
 }

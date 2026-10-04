@@ -1,4 +1,4 @@
-import { Building2, Check, ChevronDown, Plus, User } from 'lucide-react';
+﻿import { Building2, Check, ChevronDown, Plus, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '@/lib/session/SessionProvider';
@@ -72,7 +72,7 @@ export function AccountSwitcher() {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`Banking context: ${label}. Switch banking`}
-        className={`focus-ring inline-flex min-h-[36px] max-w-[11rem] items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold transition-colors ${
+        className={`focus-ring inline-flex min-h-[36px] max-w-[6.5rem] xs:max-w-[11rem] items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold transition-colors ${
           isBusiness
             ? 'border-slate-300 bg-slate-900 text-white hover:bg-slate-800'
             : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300'

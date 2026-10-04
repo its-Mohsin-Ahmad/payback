@@ -165,7 +165,7 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
       <div className="flex min-w-0 flex-1 flex-col">
         {/* `safe-top` clears the notch/Dynamic Island (spec §06). */}
         <header className="no-print safe-top sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-700/70 dark:bg-night/90">
-          <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
+          <div className="flex h-16 items-center gap-2 px-4 sm:gap-3 sm:px-6">
             <button
               type="button"
               className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden"
