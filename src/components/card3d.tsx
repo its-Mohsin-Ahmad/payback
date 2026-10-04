@@ -103,16 +103,35 @@ export function CardFront({
 }) {
   const cfg = SIZES[size];
   const tone = toneClasses(card);
+  /**
+   * The holographic patch and the network mark occupied the same region of the
+   * face, so the "DEMO NETWORK" badge sat under a translucent rainbow. Every
+   * fixed-pixel piece of furniture is now expressed as a fraction of the card's
+   * own width, which also keeps the face in proportion at `sm` and `lg`.
+   */
+  const px = (n: number) => `${Math.round((n / 340) * cfg.width)}px`;
   return (
     <CardSurface card={card} size={size} shine={shine}>
       <div className="flex items-start justify-between">
-        <Wordmark className={tone.ink} />
-        <ContactlessGlyph className={tone.dark ? 'text-slate-800/80' : 'text-white/85'} />
+        <Wordmark
+          className={tone.ink}
+          iconClass={px(16)}
+          textStyle={{ fontSize: px(13) }}
+        />
+        <ContactlessGlyph
+          className={tone.dark ? 'text-slate-800/80' : 'text-white/85'}
+          width={px(20)}
+          height={px(20)}
+        />
       </div>
 
       <div className="flex items-end justify-between">
-        <CardChip />
-        <NetworkMark label={card.identity.network} className={tone.badge} />
+        <CardChip width={px(46)} height={px(34)} />
+        <NetworkMark
+          label={card.identity.network}
+          className={tone.badge}
+          style={{ fontSize: px(7), letterSpacing: '0.18em' }}
+        />
       </div>
 
       <div>
@@ -120,19 +139,29 @@ export function CardFront({
           {showPan ? card.demoPan : card.maskedPan}
         </div>
         <div className="mt-1.5 flex items-end justify-between">
-          <div>
+          <div className="min-w-0">
             <p className={cn('font-semibold uppercase tracking-[0.16em]', tone.inkSoft, cfg.font)}>Cardholder</p>
-            <p className={cn('font-semibold uppercase tracking-[0.1em]', tone.ink, cfg.holder)}>{card.holder}</p>
+            <p className={cn('truncate font-semibold uppercase tracking-[0.1em]', tone.ink, cfg.holder)}>{card.holder}</p>
           </div>
-          <div className="text-right">
+          <div className="shrink-0 text-right">
             <p className={cn('font-semibold uppercase tracking-[0.16em]', tone.inkSoft, cfg.font)}>Valid thru</p>
             <p className={cn('tnum font-mono font-semibold', tone.ink, cfg.holder)}>{card.expiry}</p>
           </div>
         </div>
       </div>
 
-      <div className="pb-holo pointer-events-none absolute right-[-16%] top-[16%] h-[50%] w-[40%] rotate-[18deg] rounded-2xl opacity-60" aria-hidden />
-      <span className={cn('absolute bottom-1.5 right-3 text-[6px] font-bold uppercase tracking-[0.2em]', tone.inkFaint)}>Demo card</span>
+      {/* Sits behind the face furniture, lower and further out, so it reads as a
+          foil security feature instead of covering the network mark. */}
+      <div
+        className="pb-holo pointer-events-none absolute right-[-6%] top-[26%] z-0 h-[42%] w-[34%] rotate-[16deg] rounded-2xl opacity-45"
+        aria-hidden
+      />
+      <span
+        className={cn('absolute bottom-1.5 right-3 font-bold uppercase', tone.inkFaint)}
+        style={{ fontSize: px(6), letterSpacing: '0.2em' }}
+      >
+        Demo card
+      </span>
     </CardSurface>
   );
 }
@@ -142,9 +171,16 @@ export function CardFront({
 /* ------------------------------------------------------------------ */
 
 /** Metallic EMV chip with contact lines and a specular highlight. */
-export function CardChip({ className }: { className?: string }) {
+export function CardChip({ className, width, height }: { className?: string; width?: string; height?: string }) {
   return (
-    <svg viewBox="0 0 46 34" className={cn('h-[34px] w-[46px]', className)} aria-label="EMV chip" role="img">
+    <svg
+      viewBox="0 0 46 34"
+      /* Set only when supplied, so a caller's sizing classes still win. */
+      style={width || height ? { width, height } : undefined}
+      className={cn('shrink-0', className)}
+      aria-label="EMV chip"
+      role="img"
+    >
       <defs>
         <linearGradient id="pb-chip" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#f8fafc" />
@@ -169,9 +205,31 @@ export function CardChip({ className }: { className?: string }) {
 }
 
 /** Contactless payment glyph. */
-export function ContactlessGlyph({ className, stroke = 'currentColor' }: { className?: string; stroke?: string }) {
+export function ContactlessGlyph({
+  className,
+  stroke = 'currentColor',
+  width,
+  height,
+}: {
+  className?: string;
+  stroke?: string;
+  width?: string;
+  height?: string;
+}) {
   return (
-    <svg viewBox="0 0 24 24" className={cn('h-5 w-5', className)} fill="none" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" aria-label="Contactless" role="img">
+    <svg
+      viewBox="0 0 24 24"
+      /* Only set when the caller passes one — an unconditional inline size would
+         beat any `h-*`/`w-*` utility a caller applies via className. */
+      style={width || height ? { width, height } : undefined}
+      className={cn('shrink-0', className)}
+      fill="none"
+      stroke={stroke}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      aria-label="Contactless"
+      role="img"
+    >
       <path d="M8.5 7.5a8 8 0 0 1 0 9" />
       <path d="M12 5.5a12 12 0 0 1 0 13" />
       <path d="M15.5 3.5a16 16 0 0 1 0 17" />
@@ -180,19 +238,41 @@ export function ContactlessGlyph({ className, stroke = 'currentColor' }: { class
 }
 
 /** Demo network representation — configurable, no partnership implied. */
-export function NetworkMark({ label, className }: { label: string; className?: string }) {
+export function NetworkMark({
+  label,
+  className,
+  style,
+}: {
+  label: string;
+  className?: string;
+  style?: CSSProperties;
+}) {
   return (
-    <span className={cn('inline-flex items-center rounded-md border px-1.5 py-0.5 text-[7px] font-bold tracking-[0.18em]', className)}>
+    <span
+      style={style}
+      className={cn('inline-flex items-center rounded-md border px-1.5 py-0.5 font-bold', className)}
+    >
       {label}
     </span>
   );
 }
 
 /** Card wordmark — the site's hexagonal mark, unchanged by card tint. */
-function Wordmark({ className, iconClass }: { className?: string; iconClass?: string }) {
+function Wordmark({
+  className,
+  iconClass,
+  textStyle,
+}: {
+  className?: string;
+  iconClass?: string;
+  textStyle?: CSSProperties;
+}) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5 font-display text-[13px] font-extrabold tracking-tight', className)}>
-      <PaybackGlyph className={cn('h-4 w-4', iconClass)} />
+    <span
+      style={textStyle}
+      className={cn('inline-flex items-center gap-1.5 font-display font-extrabold tracking-tight', className)}
+    >
+      <PaybackGlyph style={{ width: iconClass, height: iconClass }} />
       PAYBACK
     </span>
   );
@@ -310,8 +390,9 @@ export function CardBack({ card, size, shine }: { card: PaybackCard; size: CardS
         {/* Issuer + network */}
         <div className="flex items-center justify-between" style={{ gap: px(8) }}>
           <Wordmark
-            className={cn('text-[10px] leading-none', tone.ink)}
-            iconClass="h-[10px] w-[10px]"
+            className={cn('leading-none', tone.ink)}
+            iconClass={px(10)}
+            textStyle={{ fontSize: px(10) }}
           />
           <span className="flex items-center" style={{ gap: px(4) }}>
             <span
@@ -320,7 +401,11 @@ export function CardBack({ card, size, shine }: { card: PaybackCard; size: CardS
             >
               {card.secureElement.present ? 'Secure element' : 'Tokenised'}
             </span>
-            <NetworkMark label={card.identity.network} className={tone.badge} />
+            <NetworkMark
+              label={card.identity.network}
+              className={tone.badge}
+              style={{ fontSize: px(7), letterSpacing: '0.18em' }}
+            />
           </span>
         </div>
       </div>
@@ -495,20 +580,32 @@ export function PaybackCard3D({
           ) : null}
         </div>
 
-        {flipLabel && interactive ? (
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            <button
-              type="button"
-              onClick={flip}
-              className="focus-ring shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
-            >
-              {side === 'front' ? 'View back' : 'View front'}
-            </button>
-            <span className="text-[11px] text-slate-400">
-              {flipOnActivate ? 'Tap the card to flip' : 'Tap to select'}
-            </span>
-          </div>
-        ) : null}
+        {/* Always reserve the flip-control row, even when hidden, so the track
+          never changes height as the selection moves between cards. */}
+      {interactive ? (
+        <div
+          className={cn(
+            'mt-3 flex min-h-[30px] flex-wrap items-center justify-center gap-x-2 gap-y-1 transition-opacity duration-300',
+            flipLabel ? 'opacity-100' : 'pointer-events-none opacity-0',
+          )}
+          aria-hidden={!flipLabel}
+        >
+          {flipLabel ? (
+            <>
+              <button
+                type="button"
+                onClick={flip}
+                className="focus-ring shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
+              >
+                {side === 'front' ? 'View back' : 'View front'}
+              </button>
+              <span className="text-[11px] text-slate-400">
+                {flipOnActivate ? 'Tap the card to flip' : 'Tap to select'}
+              </span>
+            </>
+          ) : null}
+        </div>
+      ) : null}
       </div>
     </div>
   );
@@ -686,14 +783,23 @@ export function CardCarousel({
       >
         {cards.map((card, i) => {
           const distance = Math.abs(i - index);
+          /* Depth is a gentle step down, not a fade-out. Neighbouring cards used
+             to drop to 45% opacity and lose 30% of their saturation, which read
+             as broken/dimmed rather than "further away" — and the dark Business
+             and Travel cards turned almost black. One step of scale and a
+             gentler opacity keeps every card recognisable while still
+             separating the centred one. */
+          const depth = Math.min(distance, 2);
           return (
             <div
               key={card.id}
-              className="snap-center shrink-0 transition-all duration-500 ease-out"
+              className="snap-center shrink-0 transition-[transform,opacity,filter] duration-500 ease-out"
               style={{
-                transform: `scale(${distance === 0 ? 1 : Math.max(0.82, 1 - distance * 0.07)})`,
-                opacity: distance === 0 ? 1 : Math.max(0.45, 1 - distance * 0.22),
-                filter: distance === 0 ? 'none' : 'saturate(0.7)',
+                transform: `scale(${1 - depth * 0.045})`,
+                opacity: 1 - depth * 0.16,
+                /* A touch of blur on the outermost cards reads as depth of field;
+                   saturation is left alone so card colours stay true. */
+                filter: depth === 0 ? 'none' : `blur(${depth * 0.6}px)`,
               }}
             >
               <PaybackCard3D
@@ -709,9 +815,17 @@ export function CardCarousel({
                 flipOnActivate={false}
                 flipLabel={i === index}
               />
-              <div className="mt-2 text-center">
-                <p className="text-sm font-bold text-slate-900">{card.identity.name}</p>
-                <p className="text-xs text-slate-500">{card.identity.tagline}</p>
+              {/* Only the centred card is named. Labelling all six stacked the
+                  card name against the section heading right above it and gave
+                  every dimmed neighbour an identical caption, so the eye had no
+                  signal about which card was actually selected. */}
+              <div className="mt-3 min-h-[38px] text-center">
+                {i === index ? (
+                  <>
+                    <p className="text-sm font-bold text-slate-900">{card.identity.name}</p>
+                    <p className="text-xs text-slate-500">{card.identity.tagline}</p>
+                  </>
+                ) : null}
               </div>
             </div>
           );

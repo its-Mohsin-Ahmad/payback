@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 /**
  * The PAYBACK brand mark, shared by the website and the physical card so the
  * two are geometrically identical.
@@ -24,9 +26,17 @@ export const BRAND_ACCENT = '#34D399';
  * current text colour, chevron in emerald. Sits directly on a surface, so it
  * has no fill of its own.
  */
-export function PaybackGlyph({ className, accent = BRAND_ACCENT }: { className?: string; accent?: string }) {
+export function PaybackGlyph({
+  className,
+  accent = BRAND_ACCENT,
+  style,
+}: {
+  className?: string;
+  accent?: string;
+  style?: CSSProperties;
+}) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden focusable="false">
+    <svg viewBox="0 0 24 24" className={className} style={style} fill="none" aria-hidden focusable="false">
       <path d={HEX_PATH} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
       <path d={CHEVRON_PATH} stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

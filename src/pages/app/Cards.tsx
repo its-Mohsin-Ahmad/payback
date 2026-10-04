@@ -132,12 +132,17 @@ export default function CardsPage() {
         text="Cards, numbers, limits and secure elements are illustrative. No physical or virtual card is issued and no card network is involved."
       />
 
-      {/* Premium 3D gallery */}
+      {/* Premium 3D gallery. The heading names the *collection* rather than the
+          selected card: the carousel prints the active card's own name and
+          tagline directly beneath it, so repeating it here stacked two identical
+          captions on top of each other. */}
       <section className="rounded-3xl border border-slate-200/80 bg-gradient-to-b from-slate-50 to-white p-4 shadow-card sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">{active.identity.name}</h2>
-            <p className="text-sm text-slate-500">{active.identity.tagline}</p>
+            <h2 className="text-lg font-bold text-slate-900">Your cards</h2>
+            <p className="text-sm text-slate-500">
+              {cards.length} demo cards · swipe, tap a card, or use the arrows
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={active.status === 'Active' ? 'emerald' : active.status === 'Frozen' ? 'amber' : 'rose'}>{active.status}</Badge>
@@ -158,6 +163,13 @@ export default function CardsPage() {
           size="md"
           showPan={showPan}
           className="mt-4"
+        />
+        {/* A soft floor behind the cards gives the row a surface to sit on, so
+            the contact shadows have something to fall across instead of
+            floating over a flat gradient. */}
+        <div
+          className="pointer-events-none -mt-24 h-24 rounded-[50%] bg-gradient-to-b from-transparent via-slate-900/[0.07] to-transparent blur-xl"
+          aria-hidden
         />
       </section>
 
