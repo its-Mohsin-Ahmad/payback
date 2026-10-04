@@ -168,7 +168,7 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
             <button
               type="button"
-              className="focus-ring rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden"
               aria-label="Open navigation"
               onClick={() => setDrawerOpen(true)}
             >

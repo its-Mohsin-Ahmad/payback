@@ -144,7 +144,7 @@ export function PublicLayout() {
 
           <button
             type="button"
-            className="focus-ring rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((o) => !o)}
@@ -220,7 +220,7 @@ export function PublicLayout() {
                     key={i}
                     href="#"
                     aria-label="Social link"
-                    className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:border-emerald-300 hover:text-emerald-600"
+                    className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:border-emerald-300 hover:text-emerald-600"
                   >
                     <SocialIcon className="h-4 w-4" aria-hidden />
                   </a>

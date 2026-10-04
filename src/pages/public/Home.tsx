@@ -86,7 +86,7 @@ export default function HomePage() {
             <div className="relative flex justify-center lg:justify-end">
               <div className="relative">
                 <div className="animate-float">
-                  <PaybackCard3D card={heroCard} size="md" float={false} />
+                  <PaybackCard3D card={heroCard} size="md" float={false} flipLabel={false} />
                 </div>
 
                 <div className="absolute -left-6 top-10 hidden rounded-2xl border border-white/10 bg-white/10 p-3.5 backdrop-blur sm:block">
@@ -220,7 +220,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link to="/app" className="focus-ring mt-4 inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+              <Link to="/app" className="focus-ring mt-4 inline-flex min-h-[44px] items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700">
                 Open the app <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
@@ -269,7 +269,7 @@ export default function HomePage() {
 
             {/* Legend, in the same order as the fan so each name maps to the
                 card directly above it. */}
-            <ul className="mt-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            <ul className="pb-fan-legend mt-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
               {[
                 { label: 'Green', hint: 'Everyday' },
                 { label: 'Platinum', hint: 'Metal' },
@@ -488,7 +488,7 @@ export default function HomePage() {
             </div>
             <Link
               to="/app/analytics"
-              className="focus-ring mt-5 inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+              className="focus-ring mt-5 inline-flex min-h-[44px] items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700"
             >
               View Financial Insights <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
@@ -601,7 +601,7 @@ export default function HomePage() {
 
           <Link
             to="/rates"
-            className="focus-ring mt-6 inline-flex items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+            className="focus-ring mt-6 inline-flex min-h-[44px] items-center gap-1 rounded-lg text-sm font-semibold text-emerald-600 hover:text-emerald-700"
           >
             See all rates and fees <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
@@ -620,7 +620,7 @@ export default function HomePage() {
             <div className="flex justify-center">
               <div className="relative">
                 <div className="animate-float">
-                  <PaybackCard3D card={demoCards[2]} size="md" />
+                  <PaybackCard3D card={demoCards[2]} size="md" flipLabel={false} />
                 </div>
                 <div className="absolute -bottom-6 -left-6 hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-3.5 py-2.5 backdrop-blur sm:flex">
                   <ShieldCheck className="h-4 w-4 text-emerald-300" aria-hidden />

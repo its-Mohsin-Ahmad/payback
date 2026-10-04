@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+﻿import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { PaybackGlyph } from '@/components/brandMark';
 import { Badge } from '@/components/ui';
@@ -669,7 +669,7 @@ export function PaybackCard3D({
               <button
                 type="button"
                 onClick={flip}
-                className="focus-ring shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
+                className="focus-ring min-h-[44px] shrink-0 rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-card transition-colors hover:border-emerald-300 hover:text-emerald-700"
               >
                 {side === 'front' ? 'View back' : 'View front'}
               </button>

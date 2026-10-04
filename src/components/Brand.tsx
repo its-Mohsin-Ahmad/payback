@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 import { PaybackHexTile } from '@/components/brandMark';
 import { cn } from '@/lib/utils';
 
@@ -43,7 +43,7 @@ export function Brand({
   className?: string;
 }) {
   return (
-    <Link to={to} className={cn('focus-ring inline-flex items-center gap-2.5 rounded-lg', className)} aria-label="PAYBACK home">
+    <Link to={to} className={cn('focus-ring inline-flex min-h-[44px] items-center gap-2.5 rounded-lg', className)} aria-label="PAYBACK home">
       <LogoMark tone={tone === 'white' ? 'white' : 'emerald'} size={size} />
       <span className="leading-none">
         <Wordmark tone={tone} />

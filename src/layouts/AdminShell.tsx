@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ChevronsLeft, ChevronsRight, LogOut, RefreshCw, Search } from 'lucide-react';
 import { LogoMark } from '@/components/Brand';
@@ -128,7 +128,7 @@ export function AdminShell() {
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="focus-ring rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="focus-ring flex h-11 w-11 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 lg:hidden"
               aria-label="Open admin navigation"
             >
               <Icon name="dashboard" className="h-5 w-5" />

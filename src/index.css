@@ -619,6 +619,34 @@
     margin-left: calc(var(--pb-fan-overlap) * -1);
   }
 
+  /*
+   * Mobile composition for the card fan (spec §19–§21, failure 1).
+   *
+   * Three 248px cards overlapped by 96px measure 552px — 116px wider than a
+   * 320px screen, which pushed every public page into a horizontal scroll.
+   * Measured in a real browser rather than inferred from the CSS.
+   *
+   * The fix is a genuinely different mobile composition, not a smaller one:
+   * below 640px only the lead card shows, full size and centred. That is what a
+   * phone hero should be anyway (spec §20 — "hero visual below the text"), and
+   * the fan itself is untouched from 640px up where there is room for it.
+   */
+  @media (max-width: 639px) {
+    .pb-fan {
+      --pb-fan-card: 244px;
+      --pb-fan-overlap: 0px;
+    }
+
+    .pb-fan > * + * {
+      display: none;
+    }
+
+    /* The legend names cards that are not on screen. */
+    .pb-fan-legend > * + * {
+      display: none;
+    }
+  }
+
   /* Three 340px cards with a 116px bite read as a fan; any less and the
      section needs more width than it is given. */
   @media (min-width: 1280px) {
