@@ -877,7 +877,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[95] flex flex-col items-center gap-2 p-4 sm:items-end">
+      {/* Toasts stack upward from the bottom edge. On a phone the bottom nav
+          occupies that edge, so the stack is lifted clear of it (spec §12) and
+          padded for the home indicator (spec §06) — otherwise a toast covers
+          the navigation exactly while the user is being told to go somewhere. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[95] flex flex-col items-center gap-2 px-4 pt-4 pb-[calc(1rem+var(--pb-nav-h,3.5rem)+env(safe-area-inset-bottom,0px))] sm:items-end lg:pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
         {items.map((t) => (
           <div
             key={t.id}
