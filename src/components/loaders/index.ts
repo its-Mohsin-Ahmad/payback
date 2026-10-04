@@ -47,3 +47,6 @@ export {
   BiometricLoader,
   KYCVerificationLoader,
 } from './WorkflowLoaders';
+
+/* Time budget */
+export { LOADER_MAX_MS, clampLoaderDuration, loaderStepDelay, useBoundedLoader } from './budget';

@@ -45,7 +45,7 @@ import {
   Toggle,
   useToast,
 } from '@/components/ui';
-import { TransferLoader, type LoaderStage } from '@/components/loaders';
+import { TransferLoader, loaderStepDelay, type LoaderStage } from '@/components/loaders';
 import { PageWrap } from '@/components/blocks';
 import { QrCode as ReceiptQr } from '@/components/qr';
 import { Icon } from '@/components/Icon';
@@ -713,14 +713,19 @@ export default function TransferPage() {
  * transfer passes through rather than showing an invented percentage. The stages
  * are the honest model: we are telling the user what is happening, not claiming
  * a completion rate we cannot measure.
+ *
+ * Stage timings come from the shared loader budget, so the three stages plus the
+ * final confirmation can never add up to more than `LOADER_MAX_MS` — adding a
+ * fourth stage later would shorten them rather than overrun the budget.
  */
+const TRANSFER_STAGE_MS = loaderStepDelay(TRANSFER_STAGES.length + 1);
+
 const submit = () => {
   setProcessing(true);
   setTransferStage(0);
-  const timers = [
-    window.setTimeout(() => setTransferStage(1), 700),
-    window.setTimeout(() => setTransferStage(2), 1400),
-  ];
+  const timers = TRANSFER_STAGES.slice(1).map((_, i) =>
+    window.setTimeout(() => setTransferStage(i + 1), TRANSFER_STAGE_MS * (i + 1)),
+  );
   window.setTimeout(() => {
     timers.forEach(window.clearTimeout);
     setReceipt({ ref: uid('TXN-').toUpperCase(), at: new Date().toISOString() });
@@ -729,7 +734,7 @@ const submit = () => {
     setOtp('');
     setStepIdx(STEPS.length);
     toast.success('Transfer sent', `${money(draft.amount)} is on its way to ${draft.recipientName}.`);
-  }, 2200);
+  }, TRANSFER_STAGE_MS * TRANSFER_STAGES.length);
 };
 
   const handleNext = () => {

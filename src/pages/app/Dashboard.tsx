@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, EyeOff, Gift, Send } from 'lucide-react';
 import { AccountCard, ActionGrid, ListShell, TransactionRow } from '@/components/blocks';
@@ -27,11 +27,10 @@ import {
 } from '@/data/mock';
 import { quickActions } from '@/lib/nav';
 import { money } from '@/lib/utils';
-import { DashboardSkeleton } from '@/components/loaders';
+import { DashboardSkeleton, useBoundedLoader } from '@/components/loaders';
 
 export default function DashboardPage() {
   const [hideBalance, setHideBalance] = useState(false);
-  const [loading, setLoading] = useState(true);
   const masked = '••••••••';
   const latest = notifications.slice(0, 3);
 
@@ -41,11 +40,9 @@ export default function DashboardPage() {
    * The skeleton mirrors the real dashboard layout, so when the data lands the
    * page does not jump. There is no percentage here on purpose — we are not
    * measuring a real fetch, we are holding the frame until the data is ready.
+   * `useBoundedLoader` guarantees this can never exceed the 5s budget.
    */
-  useEffect(() => {
-    const t = window.setTimeout(() => setLoading(false), 650);
-    return () => window.clearTimeout(t);
-  }, []);
+  const loading = useBoundedLoader(650);
 
   if (loading) return <DashboardSkeleton />;
 

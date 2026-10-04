@@ -32,7 +32,14 @@ import {
   SecurityBadge,
   useToast,
 } from '@/components/ui';
-import { LoaderBar, LoaderStages, PageLoader, type LoaderStage } from '@/components/loaders';
+import {
+  LoaderBar,
+  LoaderStages,
+  PageLoader,
+  clampLoaderDuration,
+  loaderStepDelay,
+  type LoaderStage,
+} from '@/components/loaders';
 import { cn } from '@/lib/utils';
 
 /* ------------------------------------------------------------------ */
@@ -542,7 +549,7 @@ function IdentityStep({
     window.setTimeout(() => {
       patch({ documentNumber: '35202-1188394-7' });
       setStage('review');
-    }, 1500);
+    }, clampLoaderDuration(1500));
   };
 
   if (stage === 'choose') {
@@ -656,7 +663,7 @@ function IdentityStep({
 function FaceStep({ stage, setStage }: { stage: 'intro' | 'liveness' | 'done'; setStage: (s: 'intro' | 'liveness' | 'done') => void }) {
   useEffect(() => {
     if (stage !== 'liveness') return;
-    const id = window.setTimeout(() => setStage('done'), 2200);
+    const id = window.setTimeout(() => setStage('done'), clampLoaderDuration(2200));
     return () => window.clearTimeout(id);
   }, [stage, setStage]);
 
@@ -1039,14 +1046,26 @@ function CreatingScreen({ onDone }: { onDone: () => void }) {
     [step],
   );
 
-  useEffect(() => {
-    if (step >= CREATE_STEPS.length - 1) {
-      const done = window.setTimeout(onDone, 700);
-      return () => window.clearTimeout(done);
-    }
-    const next = window.setTimeout(() => setStep((s) => s + 1), 900);
-    return () => window.clearTimeout(next);
-  }, [step, onDone]);
+  /**
+ * Advance the stage rail one step at a time.
+ *
+ * The per-step delay is derived from the shared loader budget rather than
+ * hard-coded, so the whole chain stays inside `LOADER_MAX_MS` no matter how many
+ * steps `CREATE_STEPS` grows to. With five steps that works out to ~1000ms per
+ * step; adding a sixth would quietly shorten each one instead of pushing the
+ * total past five seconds.
+ */
+const CREATE_STEP_MS = loaderStepDelay(CREATE_STEPS.length);
+
+useEffect(() => {
+  const last = step >= CREATE_STEPS.length - 1;
+  // The final beat is shorter so the total lands inside the budget.
+  const t = window.setTimeout(
+    () => (last ? onDone() : setStep((s) => s + 1)),
+    last ? Math.round(CREATE_STEP_MS / 2) : CREATE_STEP_MS,
+  );
+  return () => window.clearTimeout(t);
+}, [step, onDone]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4">

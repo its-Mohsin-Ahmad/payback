@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Flashlight, HelpCircle, ImageUp, ScanLine, ShieldCheck, X } from 'lucide-react';
 import { Badge, Button, useToast } from '@/components/ui';
-import { LoaderAnnouncer } from '@/components/loaders';
+import { clampLoaderDuration, LoaderAnnouncer } from '@/components/loaders';
 import { isExpired, parseQr, QR_KIND_LABEL, type QrPayload } from '@/lib/qrData';
 import { cn } from '@/lib/utils';
 
@@ -198,10 +198,11 @@ export function QrScanner({
       walked end to end. This is a *timer*, not a measurement, so no progress
       percentage is derived from it — showing "83%" here would be a fabricated
       number that reaches 100% whether or not anything was actually scanned.
-    */
+      The delay is clamped to the shared loader budget.
+     */
     const started = Date.now();
     const id = window.setInterval(() => {
-      if (Date.now() - started >= 2400) {
+      if (Date.now() - started >= clampLoaderDuration(2400)) {
         window.clearInterval(id);
         const sample = samples[samples.length - 1];
         if (sample) handleRaw(sample.raw);

@@ -84,12 +84,11 @@ function SidebarContent({ variant, onNavigate }: { variant: 'personal' | 'busine
   );
 }
 
-import { PaybackLoader } from '@/components/loaders';
+import { PaybackLoader, useBoundedLoader } from '@/components/loaders';
 
 export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'business' }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
-  const [booting, setBooting] = useState(true);
   const { pathname } = useLocation();
   const toast = useToast();
 
@@ -100,12 +99,15 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
    * user never sees a half-built interface flash before it re-authenticates.
    * It runs on entry only — never on navigation — and is deliberately
    * indeterminate: we genuinely do not know how long a session restore takes.
+   *
+   * `sessionStorage` marks the app as booted so the loader appears once per
+   * session rather than on every route change. It is read during the first
+   * render so an already-booted session never flashes the loader at all.
    */
+  const booting = useBoundedLoader(900, !sessionStorage.getItem('pb:booted'));
+
   useEffect(() => {
-    if (sessionStorage.getItem('pb:booted')) return;
     sessionStorage.setItem('pb:booted', '1');
-    const t = window.setTimeout(() => setBooting(false), 900);
-    return () => window.clearTimeout(t);
   }, []);
 
   useEffect(() => {

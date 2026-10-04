@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -35,7 +35,7 @@ import {
   useToast,
 } from '@/components/ui';
 import { cardUtilisation, paybackCards, secureSim, type PaybackCard } from '@/lib/cardData';
-import { CardsSkeleton } from '@/components/loaders';
+import { CardsSkeleton, useBoundedLoader } from '@/components/loaders';
 import { money } from '@/lib/utils';
 
 type AuthAction = 'freeze' | 'unfreeze' | 'replace' | 'pin' | null;
@@ -54,7 +54,6 @@ export default function CardsPage() {
   const [dailyLimit, setDailyLimit] = useState('500');
   const [monthlyLimit, setMonthlyLimit] = useState('5000');
   const [simOpen, setSimOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   /**
    * Hold a skeleton frame until the card set has "arrived".
@@ -62,10 +61,7 @@ export default function CardsPage() {
    * This also guarantees the carousel mounts at its final width, so the centre
    * calculation runs against real geometry rather than a zero-width track.
    */
-  useEffect(() => {
-    const t = window.setTimeout(() => setLoading(false), 550);
-    return () => window.clearTimeout(t);
-  }, []);
+  const loading = useBoundedLoader(550);
 
   if (loading) {
     return (
