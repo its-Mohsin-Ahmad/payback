@@ -1,5 +1,6 @@
 import {
   createContext,
+  Fragment,
   useCallback,
   useContext,
   useEffect,
@@ -1360,6 +1361,139 @@ export function Tr({ children, className, onClick }: { children: ReactNode; clas
     >
       {children}
     </tr>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive table → cards (spec §116)                                */
+/* ------------------------------------------------------------------ */
+
+export type TableColumn<T> = {
+  key: string;
+  header: ReactNode;
+  cell: (row: T) => ReactNode;
+  align?: 'left' | 'right' | 'center';
+  /** Extra classes for the desktop `<td>` — e.g. `whitespace-nowrap text-xs`. */
+  cellClassName?: string;
+  /** Drop this column from the desktop table below the given breakpoint. */
+  desktopHidden?: 'md' | 'lg';
+  /**
+   * How this column is presented in the mobile card:
+   *  - `primary` — the card headline (the first one wins)
+   *  - `value`   — trailing value, sitting opposite the headline
+   *  - `meta`    — a labelled row inside the card body
+   *  - `hidden`  — desktop only, for genuinely decorative columns
+   */
+  mobile?: 'primary' | 'value' | 'meta' | 'hidden';
+};
+
+/**
+ * One definition, two presentations (spec §116).
+ *
+ * A table is the right control on a large screen and the wrong one on a phone:
+ * seven columns cannot fit in 360px, and the usual fix — `hidden md:table-cell`
+ * — quietly deletes information from the mobile experience. Instead this
+ * renders a real `<table>` from `md` up and the same rows as stacked cards
+ * below it, so nothing is withheld and nothing has to be scrolled sideways.
+ *
+ * Cards label every value, because a bare "12 Mar 2026" floating under a
+ * headline means nothing without its column header to explain it.
+ */
+export function ResponsiveTable<T>({
+  columns,
+  rows,
+  rowKey,
+  onRowClick,
+  mobileLabel,
+}: {
+  columns: TableColumn<T>[];
+  rows: T[];
+  rowKey: (row: T) => string;
+  onRowClick?: (row: T) => void;
+  /** Accessible name for the list on mobile, e.g. "Transactions". */
+  mobileLabel?: string;
+}) {
+  const primary = columns.find((c) => c.mobile === 'primary');
+  const value = columns.find((c) => c.mobile === 'value');
+  const meta = columns.filter((c) => c.mobile === 'meta');
+
+  const desktopOnly = (c: TableColumn<T>) =>
+    cn(c.desktopHidden === 'md' && 'hidden md:table-cell', c.desktopHidden === 'lg' && 'hidden lg:table-cell');
+
+  return (
+    <>
+      <div className="hidden md:block">
+        <TableWrap>
+          <thead>
+            <tr>
+              {columns.map((c) => (
+                <Th key={c.key} align={c.align} className={desktopOnly(c)}>
+                  {c.header}
+                </Th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <Tr key={rowKey(row)} onClick={onRowClick ? () => onRowClick(row) : undefined}>
+                {columns.map((c) => (
+                  <Td key={c.key} align={c.align} className={cn(c.cellClassName, desktopOnly(c))}>
+                    {c.cell(row)}
+                  </Td>
+                ))}
+              </Tr>
+            ))}
+          </tbody>
+        </TableWrap>
+      </div>
+
+      <ul className="divide-y divide-slate-100 md:hidden" aria-label={mobileLabel}>
+        {rows.map((row) => (
+          <li key={rowKey(row)}>
+            {/* Mirrors `Tr`: focusable and Enter/Space activatable only when the
+                row actually does something. Space is handled too — `Tr` does not,
+                which leaves keyboard users unable to activate a row. */}
+            <div
+              role={onRowClick ? 'button' : undefined}
+              tabIndex={onRowClick ? 0 : undefined}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              onKeyDown={
+                onRowClick
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onRowClick(row);
+                      }
+                    }
+                  : undefined
+              }
+              className={cn(
+                'focus-ring flex min-h-[3.5rem] flex-col gap-2 px-4 py-3.5',
+                onRowClick && 'cursor-pointer active:bg-slate-50',
+              )}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">{primary ? primary.cell(row) : null}</div>
+                {value ? <div className="shrink-0 text-right">{value.cell(row)}</div> : null}
+              </div>
+
+              {meta.length > 0 && (
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                  {meta.map((c) => (
+                    <Fragment key={c.key}>
+                      {/* Label from the desktop header, so the two presentations
+                          can never drift apart. */}
+                      <dt className="text-caption-fluid text-slate-500">{c.header}</dt>
+                      <dd className="text-caption-fluid text-right text-slate-700">{c.cell(row)}</dd>
+                    </Fragment>
+                  ))}
+                </dl>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

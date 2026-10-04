@@ -9,15 +9,13 @@ import {
   Input,
   PageHeader,
   Pagination,
+  ResponsiveTable,
   SegmentedControl,
   Select,
   StatCard,
   StatusBadge,
-  TableWrap,
-  Td,
-  Th,
-  Tr,
   useToast,
+  type TableColumn,
 } from '@/components/ui';
 import { accounts, transactions, type Transaction } from '@/data/mock';
 import { formatDate, money } from '@/lib/utils';
@@ -60,6 +58,69 @@ export default function TransactionsPage() {
   const current = Math.min(page, pageCount);
   const rows = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
   const resetPage = () => setPage(1);
+
+  /**
+   * Declared once, rendered as a table on desktop and as cards on mobile
+   * (spec §116). Columns keep their desktop order; on a phone the `primary`
+   * column becomes the headline and the `value` column sits opposite it.
+   */
+  const columns: TableColumn<Transaction>[] = [
+    {
+      key: 'date',
+      header: 'Date',
+      mobile: 'meta',
+      cellClassName: 'whitespace-nowrap text-xs text-slate-500',
+      cell: (tx) => formatDate(tx.date, { month: 'short', day: 'numeric', year: 'numeric' }),
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      mobile: 'primary',
+      cell: (tx) => (
+        <>
+          <p className="font-semibold text-slate-900">{tx.description}</p>
+          <p className="text-xs text-slate-500">
+            {tx.category} • {tx.reference}
+          </p>
+        </>
+      ),
+    },
+    {
+      key: 'account',
+      header: 'Account',
+      mobile: 'meta',
+      desktopHidden: 'md',
+      cellClassName: 'whitespace-nowrap text-xs',
+      cell: (tx) => tx.account,
+    },
+    {
+      key: 'method',
+      header: 'Method',
+      mobile: 'meta',
+      desktopHidden: 'lg',
+      cellClassName: 'whitespace-nowrap text-xs text-slate-500',
+      cell: (tx) => tx.method,
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      align: 'right',
+      mobile: 'value',
+      cell: (tx) => (
+        <span className={tx.amount >= 0 ? 'tnum font-semibold text-emerald-600' : 'tnum font-semibold text-slate-900'}>
+          {tx.amount >= 0 ? '+' : '−'}
+          {money(Math.abs(tx.amount), tx.currency)}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      align: 'right',
+      mobile: 'meta',
+      cell: (tx) => <StatusBadge status={tx.status} />,
+    },
+  ];
 
   return (
     <PageWrap>
@@ -170,45 +231,13 @@ export default function TransactionsPage() {
           />
         ) : (
           <>
-            <TableWrap>
-              <thead>
-                <tr>
-                  <Th>Date</Th>
-                  <Th>Description</Th>
-                  <Th className="hidden md:table-cell">Account</Th>
-                  <Th className="hidden lg:table-cell">Method</Th>
-                  <Th align="right">Amount</Th>
-                  <Th align="right">Status</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((tx) => (
-                  <Tr key={tx.id} onClick={() => navigate(`/app/transactions/${tx.id}`)}>
-                    <Td className="whitespace-nowrap text-xs text-slate-500">
-                      {formatDate(tx.date, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </Td>
-                    <Td>
-                      <p className="font-semibold text-slate-900">{tx.description}</p>
-                      <p className="text-xs text-slate-500">
-                        {tx.category} • {tx.reference}
-                      </p>
-                    </Td>
-                    <Td className="hidden whitespace-nowrap text-xs md:table-cell">{tx.account}</Td>
-                    <Td className="hidden whitespace-nowrap text-xs text-slate-500 lg:table-cell">{tx.method}</Td>
-                    <Td
-                      align="right"
-                      className={tx.amount >= 0 ? 'tnum font-semibold text-emerald-600' : 'tnum font-semibold text-slate-900'}
-                    >
-                      {tx.amount >= 0 ? '+' : '−'}
-                      {money(Math.abs(tx.amount), tx.currency)}
-                    </Td>
-                    <Td align="right">
-                      <StatusBadge status={tx.status} />
-                    </Td>
-                  </Tr>
-                ))}
-              </tbody>
-            </TableWrap>
+            <ResponsiveTable
+              columns={columns}
+              rows={rows}
+              rowKey={(tx) => tx.id}
+              onRowClick={(tx) => navigate(`/app/transactions/${tx.id}`)}
+              mobileLabel="Transactions"
+            />
             <div className="px-4 py-3">
               <Pagination page={current} pageCount={pageCount} onPage={setPage} />
             </div>
