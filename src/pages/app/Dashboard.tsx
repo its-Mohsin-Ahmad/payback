@@ -26,10 +26,16 @@ import {
   transactions,
 } from '@/data/mock';
 import { quickActions } from '@/lib/nav';
+import { useSession } from '@/lib/session/SessionProvider';
+import { accountsFor, displayName, greeting, toDisplayAccount, totalBalance as sessionTotal } from '@/lib/session/selectors';
 import { money } from '@/lib/utils';
 import { DashboardSkeleton, useBoundedLoader } from '@/components/loaders';
 
 export default function DashboardPage() {
+  const { session } = useSession();
+  const user = session.user;
+  // Only this user's accounts, in the active banking context (spec §18, §35).
+  const myAccounts = accountsFor(session).map(toDisplayAccount);
   const [hideBalance, setHideBalance] = useState(false);
   const masked = '••••••••';
   const latest = notifications.slice(0, 3);
@@ -52,10 +58,12 @@ export default function DashboardPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">Overview</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            Good morning, {customer.preferredName}
+            {/* Greeting and name both derive from the live session; the time of day
+                is evaluated per render (spec §6, §17). */}
+            {greeting()}, {displayName(user)}
           </h1>
           <p className="mt-1.5 text-sm text-slate-500">
-            {customer.tier} • Last signed in {totalBalance.lastLogin}
+            {user.tier} • Last signed in {totalBalance.lastLogin}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -87,7 +95,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-white/50">Total balance</p>
               <p className="tnum mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                {hideBalance ? masked : money(totalBalance.total, totalBalance.currency)}
+                {hideBalance ? masked : money(sessionTotal(session), session.preferences.displayCurrency)}
               </p>
               <p className="mt-1.5 text-sm text-white/60">
                 {hideBalance ? 'PKR equivalent hidden' : `≈ ${money(totalBalance.pkrEquivalent, 'PKR', { decimals: false })}`}
@@ -107,8 +115,8 @@ export default function DashboardPage() {
 
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { label: 'Available', value: hideBalance ? masked : money(totalBalance.available) },
-              { label: 'Accounts', value: String(accounts.length) },
+              { label: 'Available', value: hideBalance ? masked : money(myAccounts.reduce((s, a) => s + a.available, 0)) },
+              { label: 'Accounts', value: String(myAccounts.length) },
               { label: 'Last login', value: totalBalance.lastLogin },
               { label: 'Status', value: 'All systems normal' },
             ].map((item) => (
@@ -159,7 +167,7 @@ export default function DashboardPage() {
       {/* Accounts */}
       <section className="space-y-3">
         <SectionTitle
-          title="Your accounts"
+          title={`${user.preferredName || user.firstName}'s accounts`}
           description="Balances update in real time — demo data."
           action={
             <Link to="/app/accounts" className="focus-ring inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-semibold text-emerald-600 hover:bg-emerald-50">
@@ -168,7 +176,7 @@ export default function DashboardPage() {
           }
         />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {accounts.slice(0, 4).map((account) => (
+          {myAccounts.slice(0, 4).map((account) => (
             <AccountCard key={account.id} account={account} />
           ))}
         </div>

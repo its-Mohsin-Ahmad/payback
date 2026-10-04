@@ -15,10 +15,17 @@ import {
   useToast,
 } from '@/components/ui';
 import { customer, totalBalance } from '@/data/mock';
+import { useSession } from '@/lib/session/SessionProvider';
+import { accountsFor, fullAddress, fullName, initials, maskPhone } from '@/lib/session/selectors';
 import { money } from '@/lib/utils';
 
 export default function ProfilePage() {
   const toast = useToast();
+  // Every value below comes from the signed-in session, never a constant
+  // (spec §4, §7, §8, §9). Editing the profile in Settings updates this page.
+  const { session } = useSession();
+  const user = session.user;
+  const primaryAccount = accountsFor(session)[0];
 
   return (
     <PageWrap>
@@ -38,18 +45,28 @@ export default function ProfilePage() {
       <section className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-3xl bg-navy p-6 text-white shadow-lift navy-mesh lg:col-span-2">
           <div className="flex flex-wrap items-center gap-4">
-            <Avatar name={customer.name} size="xl" color="#10B981" />
+            {/* Uploaded photo when present, otherwise initials derived from the
+                live name (spec §5). */}
+            {user.photoUrl ? (
+              <img
+                src={user.photoUrl}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-full border-2 border-white/25 object-cover"
+              />
+            ) : (
+              <Avatar name={fullName(user)} size="xl" color="#10B981" />
+            )}
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-bold">{customer.name}</h2>
+                <h2 className="text-xl font-bold">{fullName(user)}</h2>
                 <Badge tone="emerald" icon={<BadgeCheck className="h-3 w-3" aria-hidden />}>
-                  {customer.tier}
+                  {user.tier}
                 </Badge>
               </div>
               <p className="text-sm text-white/60">
-                {customer.email} • {customer.phone}
+                {user.email} • {maskPhone(user.phone)}
               </p>
-              <p className="text-xs text-white/45">Member since {customer.memberSince}</p>
+              <p className="text-xs text-white/45">Member since {user.memberSince}</p>
             </div>
           </div>
 
@@ -95,14 +112,17 @@ export default function ProfilePage() {
             <KeyValue
               columns={2}
               items={[
-                { label: 'Full name', value: customer.name },
-                { label: 'Preferred name', value: customer.preferredName },
-                { label: 'Email', value: customer.email },
-                { label: 'Mobile', value: customer.phone },
-                { label: 'Date of birth', value: customer.dateOfBirth },
-                { label: 'National ID', value: customer.nationalId, mono: true },
-                { label: 'Address', value: customer.address },
-                { label: 'Member since', value: customer.memberSince },
+                { label: 'Full name', value: fullName(user) },
+                { label: 'Preferred name', value: user.preferredName || user.firstName },
+                { label: 'Email', value: user.email },
+                { label: 'Mobile', value: maskPhone(user.phone) },
+                { label: 'Date of birth', value: user.dateOfBirth },
+                { label: 'National ID', value: user.nationalId, mono: true },
+                { label: 'Nationality', value: user.nationality },
+                { label: 'Address', value: fullAddress(user) },
+                { label: 'City', value: `${user.city}${user.postal ? ` ${user.postal}` : ''}` },
+                { label: 'Country', value: user.country },
+                { label: 'Member since', value: user.memberSince },
               ]}
             />
           </CardBody>
@@ -112,8 +132,14 @@ export default function ProfilePage() {
           <Card>
             <CardHeader title="Account identifiers" subtitle="Share these to receive money" />
             <CardBody className="space-y-4">
-              <CopyField label="IBAN" value={customer.iban} hint="Demo IBAN — not a real account." />
-              <CopyField label="PAYBACK ID" value="mohsin.ahmad@payback" hint="Send to other PAYBACK users instantly." />
+              <CopyField label="IBAN" value={primaryAccount?.iban ?? 'Not available'} hint="Demo IBAN — not a real account." />
+              {/* Derived from the live profile, so it changes with the account
+                  holder rather than staying a fixed string (spec §7). */}
+              <CopyField
+                label="PAYBACK ID"
+                value={`${user.firstName.toLowerCase()}.${user.lastName.toLowerCase()}@payback`}
+                hint="Send to other PAYBACK users instantly."
+              />
             </CardBody>
           </Card>
 

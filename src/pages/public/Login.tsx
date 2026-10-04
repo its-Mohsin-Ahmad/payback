@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { Alert, Button, Checkbox, OtpInput, SecurityBadge, useToast } from '@/components/ui';
+import { useSession } from '@/lib/session/SessionProvider';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { session } = useSession();
   const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
-  const [email, setEmail] = useState('mohsin.ahmad@example.com');
+  // Prefilled with the signed-in demo identity rather than a fixed address, so
+  // the form never suggests someone else's account (spec §7).
+  const [email, setEmail] = useState(session.user.email);
   const [password, setPassword] = useState('demo-password');
   const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');

@@ -4,10 +4,12 @@ import { Bell, Building2, LogOut, Menu, MessageSquare, Search } from 'lucide-rea
 import { Brand } from '@/components/Brand';
 import { Icon } from '@/components/Icon';
 import { Avatar, Badge, useToast } from '@/components/ui';
-import { appNav, bottomNav, businessNav, type NavGroup } from '@/lib/nav';
+import { appNav, bottomNav, businessBottomNav, businessNav, type NavItem, type NavGroup } from '@/lib/nav';
 import { cn } from '@/lib/utils';
-import { customer } from '@/data/mock';
 import { businessProfile } from '@/data/enterprise';
+import { AccountSwitcher } from '@/components/AccountSwitcher';
+import { useSession } from '@/lib/session/SessionProvider';
+import { businessesFor, displayName, fullName } from '@/lib/session/selectors';
 
 function NavSection({ group, onNavigate }: { group: NavGroup; onNavigate?: () => void }) {
   return (
@@ -45,9 +47,15 @@ function NavSection({ group, onNavigate }: { group: NavGroup; onNavigate?: () =>
 }
 
 function SidebarContent({ variant, onNavigate }: { variant: 'personal' | 'business'; onNavigate?: () => void }) {
+  const { session } = useSession();
   const groups = variant === 'business' ? businessNav : appNav;
-  const displayName = variant === 'business' ? businessProfile.primaryContact : customer.name;
-  const displayRole = variant === 'business' ? businessProfile.role : customer.tier;
+  // Identity comes from the session, so the sidebar can never contradict the
+  // profile page (spec §57).
+  const name = variant === 'business' ? businessesFor(session)[0]?.name ?? businessProfile.name : fullName(session.user);
+  const role =
+    variant === 'business'
+      ? businessesFor(session)[0]?.userRole ?? businessProfile.role
+      : session.user.tier;
 
   return (
     <div className="flex h-full flex-col">
@@ -70,10 +78,10 @@ function SidebarContent({ variant, onNavigate }: { variant: 'personal' | 'busine
 
       <div className="shrink-0 border-t border-white/10 p-3">
         <div className="flex items-center gap-3 rounded-xl bg-white/5 p-2.5">
-          <Avatar name={displayName} size="sm" color={variant === 'business' ? '#38BDF8' : '#10B981'} />
+          <Avatar name={name} size="sm" color={variant === 'business' ? '#38BDF8' : '#10B981'} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-white">{displayName}</p>
-            <p className="truncate text-[11px] text-white/50">{displayRole}</p>
+            <p className="truncate text-xs font-semibold text-white">{name}</p>
+            <p className="truncate text-[11px] text-white/50">{role}</p>
           </div>
           <Link to="/login" aria-label="Sign out" className="focus-ring rounded-lg p-1.5 text-white/50 transition-colors hover:bg-white/10 hover:text-white">
             <LogOut className="h-4 w-4" aria-hidden />
@@ -91,6 +99,9 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
   const [userMenu, setUserMenu] = useState(false);
   const { pathname } = useLocation();
   const toast = useToast();
+  // Every identity shown in the shell resolves through here (spec §46, §57).
+  const { session } = useSession();
+  const user = session.user;
 
   /**
    * Boot state for the authenticated app.
@@ -118,6 +129,15 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
 
   const base = variant === 'business' ? '/business/app' : '/app';
   const nav = variant === 'business' ? businessNav : appNav;
+  /**
+   * The mobile tab bar follows the banking context (spec §24, §55).
+   *
+   * This is the fix for business banking disappearing on a phone: previously
+   * every tab pointed at `/app`, so a business user who landed on a business page
+   * had to tab back to personal banking, and had no way to reach business pages
+   * from the tab bar at all.
+   */
+  const tabNav: NavItem[] = variant === 'business' ? businessBottomNav : bottomNav;
   const flatNav = nav.flatMap((g) => g.items);
   const current = [...flatNav].sort((a, b) => b.to.length - a.to.length).find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
 
@@ -159,9 +179,15 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-slate-900">{current?.label ?? 'Dashboard'}</p>
               <p className="hidden truncate text-xs text-slate-500 sm:block">
-                {variant === 'business' ? businessProfile.name : `Welcome back, ${customer.preferredName}`}
+                {/* Name comes from the session, never a constant (spec §6). In the
+                    business context it names the business, not the customer. */}
+                {variant === 'business' ? businessProfile.name : `Welcome back, ${displayName(user)}`}
               </p>
             </div>
+
+            {/* Banking context is switchable from every width, which is what makes
+                Business Banking reachable on a phone (spec §36, §52). */}
+            <AccountSwitcher />
 
             <div className="relative hidden md:block">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
@@ -201,22 +227,29 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
                 aria-haspopup="menu"
                 aria-expanded={userMenu}
               >
-                <Avatar name={variant === 'business' ? businessProfile.name : customer.name} size="sm" color={variant === 'business' ? '#38BDF8' : '#0F172A'} />
+                <Avatar name={variant === 'business' ? businessProfile.name : fullName(user)} size="sm" color={variant === 'business' ? '#38BDF8' : '#0F172A'} />
                 <span className="hidden text-left lg:block">
                   <span className="block text-xs font-semibold text-slate-900">
-                    {variant === 'business' ? businessProfile.name.split(' ')[0] : customer.preferredName}
+                    {/* First name derived from the live profile (spec §6). */}
+                    {variant === 'business' ? businessProfile.name.split(' ')[0] : displayName(user)}
                   </span>
-                  <span className="block text-[11px] text-slate-500">{variant === 'business' ? 'Business' : 'Premium'}</span>
+                  <span className="block text-[11px] text-slate-500">
+                    {variant === 'business' ? businessesFor(session)[0]?.userRole ?? 'Business' : user.tier}
+                  </span>
                 </span>
               </button>
 
               {userMenu ? (
                 <div role="menu" className="animate-fade-in absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lift">
                   <div className="border-b border-slate-100 px-4 py-3">
-                    <p className="truncate text-sm font-semibold text-slate-900">{variant === 'business' ? businessProfile.name : customer.name}</p>
-                    <p className="truncate text-xs text-slate-500">{variant === 'business' ? businessProfile.role : customer.email}</p>
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {variant === 'business' ? businessesFor(session)[0]?.name ?? businessProfile.name : fullName(user)}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
+                      {variant === 'business' ? (businessesFor(session)[0]?.email ?? businessProfile.primaryContact) : user.email}
+                    </p>
                     <Badge tone="emerald" className="mt-2">
-                      {variant === 'business' ? 'Business tier' : customer.tier}
+                      {variant === 'business' ? 'Business banking' : user.tier}
                     </Badge>
                   </div>
                   <div className="p-1.5">
@@ -285,7 +318,7 @@ export function AppShell({ variant = 'personal' }: { variant?: 'personal' | 'bus
             aria-label="Bottom"
           >
             <ul className="grid grid-cols-5">
-              {bottomNav.map((item) => (
+              {tabNav.map((item) => (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}

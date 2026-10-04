@@ -14,9 +14,17 @@ import {
   useToast,
 } from '@/components/ui';
 import { businessAccounts, businessProfile } from '@/data/enterprise';
+import { useSession } from '@/lib/session/SessionProvider';
+import { businessesFor, maskPhone } from '@/lib/session/selectors';
 
 export default function BusinessProfilePage() {
   const toast = useToast();
+  // Business details resolve from the session, falling back to the demo
+  // enterprise record (spec §28, §35).
+  const { session } = useSession();
+  const biz = businessesFor(session)[0];
+  const contactName = biz?.name ?? businessProfile.primaryContact;
+  const contactRole = biz?.userRole ?? businessProfile.role;
 
   return (
     <PageWrap>
@@ -71,10 +79,10 @@ export default function BusinessProfilePage() {
             <KeyValue
               columns={1}
               items={[
-                { label: 'Name', value: businessProfile.primaryContact },
-                { label: 'Role', value: businessProfile.role },
-                { label: 'Email', value: 'mohsin.ahmad@example.com' },
-                { label: 'Phone', value: '+92 300 ••• 4471' },
+                { label: 'Name', value: contactName },
+                { label: 'Role', value: contactRole },
+                { label: 'Email', value: biz?.email ?? session.user.email },
+                { label: 'Phone', value: maskPhone(biz?.phone ?? session.user.phone) },
               ]}
             />
             <Button variant="outline" block onClick={() => toast.info('Demo', 'Contact changes require re-verification.')}>

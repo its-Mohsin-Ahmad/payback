@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { sessionFromSignup, useSession } from '@/lib/session/SessionProvider';
 import {
   ArrowLeft,
   ArrowRight,
@@ -160,6 +161,7 @@ const STEP_SUBHEADINGS: Record<StepKey, string> = {
 export default function RegisterPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { replaceSession } = useSession();
 
   const [index, setIndex] = useState(0);
   const [data, setData] = useState<Onboarding>(EMPTY);
@@ -221,12 +223,50 @@ export default function RegisterPage() {
 
   const goBack = () => setIndex((i) => Math.max(0, i - 1));
 
+  /**
+   * Turn the collected details into a real session (spec §3, §11, §45).
+   *
+   * This is the bridge that makes registration mean something: before it, the
+   * form's answers were collected, displayed on the success screen, and then
+   * thrown away. Everything the user typed becomes the source of truth that the
+   * profile, dashboard and printed card all read from afterwards.
+   *
+   * Guarded by a ref so React 18's double-invoked effects in development cannot
+   * create two accounts.
+   */
+  const committed = useRef(false);
+  useEffect(() => {
+    if (!complete || committed.current) return;
+    committed.current = true;
+    replaceSession(
+      sessionFromSignup({
+        firstName: data.firstName,
+        middleName: data.middleName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.mobile,
+        dateOfBirth: data.dob,
+        nationality: data.nationality,
+        address: data.address,
+        city: data.city,
+        country: data.country,
+        postal: data.postal,
+        nationalId: data.documentNumber,
+        accountType: data.accountType,
+        // No card was chosen during signup, so the default design applies.
+        variant: 'green',
+        twoFactor: data.twoFactor,
+        biometrics: data.biometrics,
+      }),
+    );
+  }, [complete, data, replaceSession]);
+
   if (complete) {
     return (
       <SuccessScreen
         name={fullName}
         type={data.accountType}
-        onDashboard={() => navigate('/app')}
+        onDashboard={() => navigate(data.accountType === 'business' ? '/business/app' : '/app')}
         onExplore={() => navigate('/app/cards')}
       />
     );

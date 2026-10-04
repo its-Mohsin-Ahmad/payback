@@ -120,12 +120,50 @@ export const businessNav: NavGroup[] = [
   },
 ];
 
+/**
+ * Mobile bottom navigation (spec §55).
+ *
+ * These were previously a single personal-only list with hard-coded `/app`
+ * paths, which meant Business Banking had *no* first-level mobile entry point
+ * at all — the business pages existed but were unreachable without typing a URL
+ * or finding a desktop-only menu. Business now has its own set, and the shell
+ * picks between them from the active banking mode (§24).
+ */
 export const bottomNav: NavItem[] = [
   { label: 'Home', to: '/app', icon: 'home', end: true },
   { label: 'Accounts', to: '/app/accounts', icon: 'wallet' },
-  { label: 'Scan', to: '/app/scan', icon: 'scan-qr' },
   { label: 'Cards', to: '/app/cards', icon: 'credit-card' },
-  { label: 'Profile', to: '/app/profile', icon: 'user' },
+  { label: 'Scan', to: '/app/scan', icon: 'scan-qr' },
+  { label: 'More', to: '/app/profile', icon: 'user' },
+];
+
+/**
+ * Business bottom navigation (spec §24, §55).
+ *
+ * Deliberately not a copy of the personal set: "Scan" is a consumer action,
+ * while "Payments" and "Team" are the two things a business owner opens daily.
+ */
+export const businessBottomNav: NavItem[] = [
+  { label: 'Home', to: '/business/app', icon: 'home', end: true },
+  { label: 'Accounts', to: '/business/app/accounts', icon: 'wallet' },
+  { label: 'Payments', to: '/business/app/invoices', icon: 'receipt' },
+  { label: 'Team', to: '/business/app/team', icon: 'users' },
+  { label: 'More', to: '/business/app/profile', icon: 'user' },
+];
+
+/**
+ * Quick actions surfaced on the mobile business dashboard (spec §25).
+ * Every one of these resolves to a real, routed business page.
+ */
+export const businessQuickActions = [
+  { label: 'Send Money', to: '/business/app/cashflow', icon: 'send', tone: '#10B981' },
+  { label: 'Receive Money', to: '/business/app/accounts', icon: 'download', tone: '#38BDF8' },
+  { label: 'Payroll', to: '/business/app/payroll', icon: 'users', tone: '#8B5CF6' },
+  { label: 'Bills', to: '/business/app/vendors', icon: 'receipt', tone: '#F59E0B' },
+  { label: 'Invoices', to: '/business/app/invoices', icon: 'file', tone: '#6366F1' },
+  { label: 'Approvals', to: '/business/app/approvals', icon: 'shield-check', tone: '#EC4899' },
+  { label: 'Cards', to: '/business/app/cards', icon: 'credit-card', tone: '#14B8A6' },
+  { label: 'Reports', to: '/business/app/reports', icon: 'chart', tone: '#0EA5E9' },
 ];
 
 /* ------------------------------------------------------------------ */

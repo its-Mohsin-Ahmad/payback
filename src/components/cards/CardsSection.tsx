@@ -9,7 +9,7 @@ import { CardInformation } from './CardInformation';
 import { CardBenefits } from './CardBenefits';
 import { CardControls } from './CardControls';
 import { CardDetailsSheet } from './CardDetailsSheet';
-import { CARD_VARIANTS } from './cardVariants';
+import { useCardVariants } from './cardVariants';
 
 /**
  * The Cards section (spec §51).
@@ -47,12 +47,15 @@ export function CardsSection({
 }) {
   const [index, setIndex] = useState(0);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const variant = CARD_VARIANTS[index];
+  // Variants resolved against the signed-in user, so the printed cardholder
+  // name and status are the account holder's own (spec §10).
+  const variants = useCardVariants();
+  const variant = variants[index];
 
   /** Single entry point for selection so both the carousel and the chips stay in sync. */
   const select = (next: number) => {
     setIndex(next);
-    onVariantChange?.(CARD_VARIANTS[next].card.id);
+    onVariantChange?.(variants[next].card.id);
   };
 
   if (state === 'loading') {

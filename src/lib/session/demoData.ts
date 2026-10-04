@@ -1,0 +1,274 @@
+import type { BusinessProfile, Session, UserCard } from './types';
+
+/**
+ * Synthetic demo identities (spec §48).
+ *
+ * Two distinct users exist so that session switching is genuinely observable
+ * (spec §47) — logging in as the second user must change the name, accounts,
+ * cards and business, not just a label. Every value here is invented.
+ */
+
+/** Build a synthetic card record. No real issuer range is ever produced. */
+export function buildCard(
+  userId: string,
+  opts: {
+    id: string;
+    accountId: string;
+    accountLabel: string;
+    variant: UserCard['variant'];
+    cardholderName: string;
+    last4: string;
+    status?: UserCard['status'];
+    limit?: number;
+  },
+): UserCard {
+  return {
+    id: opts.id,
+    userId,
+    accountId: opts.accountId,
+    variant: opts.variant,
+    cardholderName: opts.cardholderName,
+    maskedPan: `•••• •••• •••• ${opts.last4}`,
+    last4: opts.last4,
+    expiry: '09/29',
+    status: opts.status ?? 'Active',
+    type: opts.variant === 'green' ? 'Standard' : 'Metal',
+    contactless: true,
+    online: true,
+    international: opts.variant !== 'green',
+    atm: true,
+    spendingLimit: opts.limit ?? 250_000,
+    dailyLimit: 100_000,
+    currency: 'PKR',
+    issuedAt: '2026-01-14',
+    deliveryStatus: 'Delivered',
+    accountLabel: opts.accountLabel,
+  };
+}
+
+export const AHMED_BUSINESS: BusinessProfile = {
+  id: 'biz-ahmed',
+  userId: 'usr-ahmed',
+  name: 'Northwind Technologies',
+  type: 'Private Limited',
+  registrationNumber: 'SECP-2019-44821',
+  industry: 'Software & Technology',
+  address: '14 Gulberg Avenue, Lahore, Pakistan',
+  phone: '+92 42 3577 1200',
+  email: 'finance@northwind.example',
+  website: 'northwind.example',
+  employees: 24,
+  userRole: 'Owner',
+  taxId: 'NT-4482103-6',
+};
+
+export const SANA_BUSINESS: BusinessProfile = {
+  id: 'biz-sana',
+  userId: 'usr-sana',
+  name: 'Crescent Retail Co.',
+  type: 'Sole Proprietorship',
+  registrationNumber: 'SECP-2021-90233',
+  industry: 'Retail',
+  address: '8 Zamzama Boulevard, Karachi, Pakistan',
+  phone: '+92 21 3455 8890',
+  email: 'accounts@crescentretail.example',
+  website: 'crescentretail.example',
+  employees: 11,
+  userRole: 'Administrator',
+  taxId: 'CR-9023311-2',
+};
+
+/** The session a visitor lands in — a signed-in demo customer with both contexts. */
+export const DEFAULT_SESSION: Session = {
+  demoMode: true,
+  mode: 'personal',
+  isNewUser: false,
+  user: {
+    id: 'usr-ahmed',
+    firstName: 'Ahmed',
+    middleName: '',
+    lastName: 'Khan',
+    preferredName: 'Ahmed',
+    email: 'ahmed.khan@example.com',
+    phone: '+92 300 44521 876',
+    dateOfBirth: '1994-08-14',
+    nationality: 'Pakistani',
+    address: 'House 42, Block C, Gulberg III',
+    city: 'Lahore',
+    country: 'Pakistan',
+    postal: '54660',
+    nationalId: '•••••-•••••••-3',
+    photoUrl: '',
+    tier: 'Premium Customer',
+    memberSince: 'March 2019',
+    createdAt: '2019-03-11',
+  },
+  preferences: {
+    language: 'English',
+    theme: 'system',
+    notifications: { email: true, sms: true, push: true },
+    marketing: false,
+    twoFactor: 'authenticator',
+    biometrics: true,
+    displayCurrency: 'PKR',
+  },
+  accounts: [
+    {
+      id: 'acc-ahmed-current',
+      userId: 'usr-ahmed',
+      name: 'Current Account',
+      type: 'Personal Current',
+      number: '4821',
+      iban: 'PK36 SCBL 0000 0011 2345 6702',
+      balance: 485_750,
+      available: 470_120,
+      currency: 'PKR',
+      status: 'Active',
+      mode: 'personal',
+      isDefault: true,
+      openedAt: '11 Mar 2019',
+      interest: 'No profit accrual',
+    },
+    {
+      id: 'acc-ahmed-savings',
+      userId: 'usr-ahmed',
+      name: 'Savings Account',
+      type: 'Personal Savings',
+      number: '9104',
+      iban: 'PK36 SCBL 0000 0011 2345 6710',
+      balance: 1_240_000,
+      available: 1_240_000,
+      currency: 'PKR',
+      status: 'Active',
+      mode: 'personal',
+      isDefault: false,
+      openedAt: '02 Sep 2021',
+      interest: '11.5% p.a.',
+    },
+    {
+      id: 'acc-ahmed-biz',
+      userId: 'usr-ahmed',
+      name: 'Business Current',
+      type: 'Business Current',
+      number: '9218',
+      iban: 'PK36 SCBL 0000 0011 2345 6728',
+      balance: 1_250_000,
+      available: 1_118_400,
+      currency: 'PKR',
+      status: 'Active',
+      mode: 'business',
+      isDefault: false,
+      openedAt: '19 Jun 2020',
+      interest: 'No profit accrual',
+    },
+  ],
+  cards: [
+    buildCard('usr-ahmed', {
+      id: 'card-ahmed-green',
+      accountId: 'acc-ahmed-current',
+      accountLabel: 'Current Account •••• 4821',
+      variant: 'green',
+      cardholderName: 'AHMED KHAN',
+      last4: '4821',
+    }),
+    buildCard('usr-ahmed', {
+      id: 'card-ahmed-silver',
+      accountId: 'acc-ahmed-current',
+      accountLabel: 'Current Account •••• 4821',
+      variant: 'silver',
+      cardholderName: 'AHMED KHAN',
+      last4: '7942',
+    }),
+    buildCard('usr-ahmed', {
+      id: 'card-ahmed-gold',
+      accountId: 'acc-ahmed-savings',
+      accountLabel: 'Savings Account •••• 9104',
+      variant: 'gold',
+      cardholderName: 'AHMED KHAN',
+      last4: '5510',
+      status: 'Frozen',
+    }),
+    buildCard('usr-ahmed', {
+      id: 'card-ahmed-biz',
+      accountId: 'acc-ahmed-biz',
+      accountLabel: 'Business Current •••• 9218',
+      variant: 'silver',
+      cardholderName: 'NORTHWIND TECHNOLOGIES',
+      last4: '1120',
+      limit: 900_000,
+    }),
+  ],
+  businesses: [AHMED_BUSINESS],
+  notifications: [
+    {
+      id: 'n-1',
+      userId: 'usr-ahmed',
+      title: 'Card frozen',
+      body: 'Your PAYBACK Gold card •••• 5510 is frozen and cannot authorise payments.',
+      tone: 'warning',
+      at: '2026-03-09T08:12:00Z',
+      read: false,
+      mode: 'personal',
+    },
+    {
+      id: 'n-2',
+      userId: 'usr-ahmed',
+      title: 'Business payment needs approval',
+      body: 'Supplier payment of PKR 185,000 is waiting for your review.',
+      tone: 'info',
+      at: '2026-03-08T16:40:00Z',
+      read: false,
+      mode: 'business',
+    },
+  ],
+};
+/** A second, fully independent identity for session-switch testing (spec §47). */
+export const ALT_SESSION: Session = {
+  ...DEFAULT_SESSION,
+  mode: 'personal',
+  user: {
+    ...DEFAULT_SESSION.user,
+    id: 'usr-sana',
+    firstName: 'Sana',
+    lastName: 'Iqbal',
+    preferredName: 'Sana',
+    email: 'sana.iqbal@example.com',
+    phone: '+92 321 77881 204',
+    city: 'Karachi',
+    address: 'Flat 9, Sea Breeze Plaza',
+    postal: '75500',
+    tier: 'Classic Customer',
+    memberSince: 'June 2024',
+    createdAt: '2024-06-02',
+  },
+  accounts: [
+    {
+      id: 'acc-sana-current',
+      userId: 'usr-sana',
+      name: 'Current Account',
+      type: 'Personal Current',
+      number: '3316',
+      iban: 'PK36 HBLN 0000 0099 8877 6611',
+      balance: 96_400,
+      available: 91_050,
+      currency: 'PKR',
+      status: 'Active',
+      mode: 'personal',
+      isDefault: true,
+      openedAt: '02 Jun 2024',
+      interest: 'No profit accrual',
+    },
+  ],
+  cards: [
+    buildCard('usr-sana', {
+      id: 'card-sana-green',
+      accountId: 'acc-sana-current',
+      accountLabel: 'Current Account •••• 3316',
+      variant: 'green',
+      cardholderName: 'SANA IQBAL',
+      last4: '3316',
+    }),
+  ],
+  businesses: [SANA_BUSINESS],
+  notifications: [],
+};

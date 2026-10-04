@@ -10,7 +10,59 @@
  * Every figure below is synthetic demo content (spec §20, §48).
  */
 
-import { paybackCards, type PaybackCard } from '@/lib/cardData';
+import { useMemo } from 'react';
+import { CARD_IDENTITIES, paybackCards, type CardIdentity, type PaybackCard } from '@/lib/cardData';
+import { useSession } from '@/lib/session/SessionProvider';
+import type { UserCard } from '@/lib/session/types';
+
+/**
+ * Map a session card onto the shape the 3D renderer expects.
+ *
+ * The two shapes are kept separate on purpose: `PaybackCard` is a *presentation*
+ * model with derived gradients and demo copy, while `UserCard` is the persisted
+ * record. Converting here means the physical card reads the signed-in user's
+ * cardholder name while reusing the existing premium rendering unchanged.
+ */
+function toPaybackCard(card: UserCard): PaybackCard {
+  const tier = card.variant === 'green' ? 'everyday' : card.variant === 'silver' ? 'premium' : 'black';
+  const base = CARD_IDENTITIES[tier];
+  const identity: CardIdentity = {
+    ...base,
+    // The product name follows the user's chosen variant, not the legacy tier
+    // name, so "Green" does not print as "Everyday" (spec §8).
+    name: `PAYBACK ${card.variant === 'gold' ? 'Gold' : card.variant === 'silver' ? 'Silver' : 'Green'}`,
+  };
+  return {
+    id: card.id,
+    identity,
+    // Spec §10 — this is the whole point: the embossed name is the account
+    // holder's, taken from the session, never a constant.
+    holder: card.cardholderName,
+    maskedPan: card.maskedPan,
+    // Never a real PAN. The "demo" reveal shows the same masked value.
+    demoPan: card.maskedPan,
+    last4: card.last4,
+    expiry: card.expiry,
+    status: card.status,
+    type: card.type,
+    limit: card.spendingLimit,
+    spent: Math.round(card.spendingLimit * 0.42),
+    dailyLimit: card.dailyLimit,
+    monthlyLimit: card.spendingLimit,
+    currency: card.currency,
+    online: card.online,
+    international: card.international,
+    contactless: card.contactless,
+    atm: card.atm,
+    virtual: false,
+    secureElement: {
+      present: true,
+      label: 'PAYBACK Secure Element',
+      state: 'Active',
+      detail: 'Embedded hardware module bound to your PAYBACK identity (concept).',
+    },
+  };
+}
 
 export interface CardVariant {
   /** Stable key for selection state and tests. */
@@ -126,4 +178,36 @@ export function limitLabel(card: PaybackCard) {
   return `PKR ${card.dailyLimit.toLocaleString('en-PK')} daily · PKR ${card.monthlyLimit.toLocaleString(
     'en-PK',
   )} monthly`;
+}
+
+/**
+ * The three showcase variants, resolved against the signed-in user.
+ *
+ * Where the session owns a card of that variant, that card is used — so the
+ * cardholder name, masked number, status and limits are all the real ones
+ * (spec §10, §14). Variants the user does not own fall back to the curated
+ * demo card so the showcase still presents all three designs rather than
+ * collapsing to a single card.
+ */
+export function useCardVariants(): CardVariant[] {
+  const { session } = useSession();
+  return useMemo(
+    () =>
+      CARD_VARIANTS.map((variant) => {
+        const owned = session.cards.find((c) => c.variant === variant.key);
+        if (!owned) return variant;
+        return {
+          ...variant,
+          card: toPaybackCard(owned),
+          // Availability is the user's actual configuration (spec §14, §15).
+          features: {
+            contactless: owned.contactless,
+            online: owned.online,
+            international: owned.international,
+            atm: owned.atm,
+          },
+        };
+      }),
+    [session.cards],
+  );
 }

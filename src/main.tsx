@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { SessionProvider } from './lib/session/SessionProvider';
 import './index.css';
 
 /**
@@ -29,6 +30,11 @@ restoreDeepLink();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    {/* Outside the router so the session survives navigation, and above every
+        authenticated surface — this is the single source of truth for whose
+        banking information is on screen (spec §46). */}
+    <SessionProvider>
+      <App />
+    </SessionProvider>
   </React.StrictMode>
 );
