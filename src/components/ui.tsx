@@ -530,17 +530,81 @@ function useFocusReturn(open: boolean, container: React.RefObject<HTMLElement>) 
 }
 
 /**
- * Bottom sheet — the mobile form of every dialog (spec §106).
+ * Drag-to-dismiss for bottom-anchored overlays.
  *
- * On a phone a centred modal is a desktop artefact: it floats in the middle of
- * the screen where thumbs cannot reach and wastes the space either side. This
- * anchors to the bottom edge instead, with a drag handle, and grows only as far
- * as its content needs.
+ * Returns the live offset plus the handlers to spread onto a drag handle. A
+ * 96px pull commits the dismissal and anything shorter springs back, so an
+ * accidental nudge cannot close a form the user was midway through. Pointer
+ * events are used rather than touch events so mouse and pen work identically.
+ */
+function useSheetDrag(onClose: () => void) {
+  const [dragY, setDragY] = useState(0);
+  const dragFrom = useRef<number | null>(null);
+
+  const reset = () => {
+    dragFrom.current = null;
+    setDragY(0);
+  };
+
+  return {
+    dragY,
+    handleProps: {
+      onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => {
+        dragFrom.current = e.clientY;
+        e.currentTarget.setPointerCapture(e.pointerId);
+      },
+      onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => {
+        if (dragFrom.current === null) return;
+        // Only downward travel is honoured; pulling above the resting point does
+        // nothing rather than detaching the sheet from the bottom edge.
+        setDragY(Math.max(0, e.clientY - dragFrom.current));
+      },
+      onPointerUp: () => {
+        if (dragY > 96) {
+          reset();
+          onClose();
+          return;
+        }
+        reset();
+      },
+      onPointerCancel: reset,
+    },
+  };
+}
+
+/**
+ * The grab affordance at the top of a bottom-anchored overlay (spec §106).
+ * Hidden on desktop, where the sheet is a centred dialog and a handle would be
+ * a lie. `touch-none` stops the page scrolling while the handle is dragged.
+ */
+function SheetHandle({
+  handleProps,
+  mobileOnly,
+}: {
+  handleProps: React.HTMLAttributes<HTMLDivElement>;
+  /** Hide on `sm`+ — for overlays that become a centred dialog on desktop. */
+  mobileOnly?: boolean;
+}) {
+  return (
+    <div
+      {...handleProps}
+      className={cn(
+        'flex shrink-0 cursor-grab touch-none justify-center pb-1 pt-3 active:cursor-grabbing',
+        mobileOnly && 'sm:hidden',
+      )}
+    >
+      <span className="h-1.5 w-10 rounded-full bg-slate-300" aria-hidden />
+      <span className="sr-only">Drag down to close</span>
+    </div>
+  );
+}
+
+/**
+ * Bottom sheet — the mobile form of a dialog (spec §106).
  *
- * Drag-to-dismiss is implemented with pointer events so it works for mouse,
- * touch and pen alike. A 96px pull commits the dismissal; anything shorter
- * springs back, which stops an accidental nudge from closing a form the user
- * was midway through.
+ * Use this rather than `Modal` when the content is a picker: a currency list, a
+ * provider chooser, a filter panel. Those want to be tall and scrollable, which
+ * `height="tall"` expresses directly.
  */
 export function BottomSheet({
   open,
@@ -557,35 +621,19 @@ export function BottomSheet({
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
-  /** `auto` fits its content, `tall` is 85vh, `full` covers the screen (§107). */
+  /** `auto` fits its content, `tall` is 85dvh, `full` covers the screen (§107). */
   height?: 'auto' | 'tall' | 'full';
 }) {
   useLockScroll(open);
   useEscape(open, onClose);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
   useFocusReturn(open, sheetRef);
-  const [dragY, setDragY] = useState(0);
-  const dragFrom = useRef<number | null>(null);
+  const { dragY, handleProps } = useSheetDrag(onClose);
 
   if (!open) return null;
 
-  const heights = { auto: 'max-h-[85vh]', tall: 'h-[85vh]', full: 'h-[100dvh]' } as const;
-
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    dragFrom.current = e.clientY;
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (dragFrom.current === null) return;
-    // Only downward drag is honoured; pulling above the resting point does
-    // nothing rather than detaching the sheet from the bottom edge.
-    setDragY(Math.max(0, e.clientY - dragFrom.current));
-  };
-  const onPointerUp = () => {
-    if (dragY > 96) onClose();
-    dragFrom.current = null;
-    setDragY(0);
-  };
+  const heights = { auto: 'max-h-[85dvh]', tall: 'h-[85dvh]', full: 'h-[100dvh]' } as const;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center" role="presentation">
@@ -594,31 +642,23 @@ export function BottomSheet({
         ref={sheetRef}
         role="dialog"
         aria-modal="true"
-        aria-label={typeof title === 'string' ? title : undefined}
+        aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
         className={cn(
           'animate-sheet-up relative z-10 flex w-full flex-col overflow-hidden rounded-t-sheet bg-white shadow-lift outline-none',
           heights[height],
-          height === 'auto' && 'max-h-[85vh]',
         )}
         style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
       >
-        {/* Drag handle. `touch-action: none` stops the browser scrolling the
-            page while the user is dragging the sheet itself. */}
-        <div
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-          className="flex shrink-0 cursor-grab touch-none justify-center pb-1 pt-3 active:cursor-grabbing"
-        >
-          <span className="h-1.5 w-10 rounded-full bg-slate-300" aria-hidden />
-          <span className="sr-only">Drag down to close</span>
-        </div>
+        <SheetHandle handleProps={handleProps} />
 
         {(title || description) && (
           <div className="shrink-0 px-5 pb-3 pt-1">
-            {title ? <h2 className="text-section-title font-bold text-slate-900">{title}</h2> : null}
+            {title ? (
+              <h2 id={titleId} className="text-section-title font-bold text-slate-900">
+                {title}
+              </h2>
+            ) : null}
             {description ? <p className="mt-1 text-caption-fluid text-slate-500">{description}</p> : null}
           </div>
         )}
@@ -626,7 +666,7 @@ export function BottomSheet({
         <div className="sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-5 pb-2">{children}</div>
 
         {footer ? (
-          /* Sticky actions sit above the home indicator (spec §06) and stack
+          /* Sticky actions clear the home indicator (spec §06) and stack
              full-width, which is how a thumb actually reaches them. */
           <div className="safe-bottom shrink-0 border-t border-slate-100 bg-white px-5 py-4">
             <div className="flex flex-col-reverse gap-2 xs:flex-row xs:justify-end">{footer}</div>
@@ -660,34 +700,56 @@ export function Modal({
 }) {
   useLockScroll(open);
   useEscape(open, onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useFocusReturn(open, dialogRef);
+  const { dragY, handleProps } = useSheetDrag(onClose);
   if (!open) return null;
   const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' } as const;
+  /* `dvh` rather than `vh` below: on mobile browsers `vh` measures the viewport
+     *without* the URL bar, so `92vh` overflows the visible area. */
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-4" role="presentation">
       <div className="absolute inset-0 bg-navy/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
         className={cn(
-          'animate-slide-up relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-lift sm:rounded-2xl',
-          widths[size]
+          'animate-slide-up relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-sheet bg-white shadow-lift outline-none sm:rounded-2xl',
+          widths[size],
         )}
+        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
       >
+        <SheetHandle handleProps={handleProps} mobileOnly />
+
         {(title || !hideClose) && (
           <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
             <div className="min-w-0">
-              {title ? <h2 className="text-base font-semibold text-slate-900">{title}</h2> : null}
+              {title ? (
+                <h2 id={titleId} className="text-base font-semibold text-slate-900">
+                  {title}
+                </h2>
+              ) : null}
               {description ? <p className="mt-0.5 text-sm text-slate-500">{description}</p> : null}
             </div>
             {!hideClose ? (
-              <button type="button" onClick={onClose} aria-label="Close dialog" className="focus-ring rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+              <button type="button" onClick={onClose} aria-label="Close dialog" className="focus-ring touch-target rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                 <X className="h-5 w-5" aria-hidden />
               </button>
             ) : null}
           </div>
         )}
-        <div className="sidebar-scroll flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        {footer ? <div className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end">{footer}</div> : null}
+        <div className="sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+        {footer ? (
+          /* Actions clear the home indicator (spec §06) — without `safe-bottom`
+             the confirm button sits underneath it on a notched device. */
+          <div className="safe-bottom flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end">
+            {footer}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -710,26 +772,45 @@ export function Drawer({
 }) {
   useLockScroll(open);
   useEscape(open, onClose);
+  const panelRef = useRef<HTMLElement>(null);
+  const titleId = useId();
+  useFocusReturn(open, panelRef);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[80]" role="presentation">
       <div className="absolute inset-0 bg-navy/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <aside
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
         className={cn(
-          'absolute inset-y-0 flex w-full max-w-md flex-col bg-white shadow-lift',
-          side === 'right' ? 'right-0 animate-fade-in' : 'left-0 animate-fade-in'
+          'absolute inset-y-0 flex w-full max-w-md flex-col bg-white shadow-lift outline-none',
+          side === 'right' ? 'right-0 animate-fade-in' : 'left-0 animate-fade-in',
         )}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close panel" className="focus-ring rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+        {/* The panel is full-height, so its header sits under the status bar in
+            portrait and beside the notch in landscape (spec §06). */}
+        <div className="safe-top safe-x flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4">
+          <h2 id={titleId} className="text-base font-semibold text-slate-900">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close panel"
+            className="focus-ring touch-target rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          >
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
-        <div className="sidebar-scroll flex-1 overflow-y-auto px-5 py-4">{children}</div>
-        {footer ? <div className="border-t border-slate-100 px-5 py-4">{footer}</div> : null}
+        <div className="sidebar-scroll flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+        {footer ? (
+          <div className="safe-bottom safe-x border-t border-slate-100 px-5 py-4">{footer}</div>
+        ) : (
+          <div className="safe-bottom" />
+        )}
       </aside>
     </div>
   );
