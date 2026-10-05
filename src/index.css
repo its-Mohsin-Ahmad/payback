@@ -629,13 +629,27 @@
 }
 
 /* Fanned card showcase.
-     The overlap is expressed against the same variable that sets the card
-     width, so the two can never drift apart as the breakpoints change — a
-     fixed pixel margin would look like a gap on one size and a pile on
-     another. */
+
+   The card's *typography* (padding, PAN, holder) is tied to its `size`, so the
+   width must come from that same size. Forcing a narrower width with a CSS
+   override while leaving `size="md"` produced 20px padding and a 14px PAN inside
+   a 248px box — the number overflowed and the holder/expiry collided. It only
+   looked right at 1280px+, where 340px happens to be the md width.
+
+   The fan now picks its size in JS (see `useIsWide` in Home.tsx) and lets the
+   component render at its designed width, so CSS only has to know how far each
+   card bites into the previous one. That value is keyed to the same two
+   breakpoints as the size, so the two cannot drift apart. */
+  /* Three sm cards (248px) overlapped by 92px need 560px, so the fan only
+     appears from 768px up, where 688px is available after the section's 40px
+     padding. Starting it at 640px would have needed the full 560px of 560px
+     available — zero slack for a scrollbar or a substituted font.
+
+     md cards (340px) overlapped by 104px need 812px, comfortable from 1280px up.
+     Each value is paired with the size JS selects for that same breakpoint (see
+     `useIsWide` in Home.tsx). */
   .pb-fan {
-    --pb-fan-card: 248px;
-    --pb-fan-overlap: 96px;
+    --pb-fan-overlap: 92px;
   }
 
   .pb-fan > * + * {
@@ -643,39 +657,33 @@
   }
 
   /*
-   * Mobile composition for the card fan (spec §19–§21, failure 1).
+   * Narrow composition for the card fan (spec §19–§21, failure 1).
    *
-   * Three 248px cards overlapped by 96px measure 552px — 116px wider than a
-   * 320px screen, which pushed every public page into a horizontal scroll.
-   * Measured in a real browser rather than inferred from the CSS.
+   * Three 248px cards overlapped by 92px measure 560px, which is wider than a
+   * 640px viewport once the section padding is taken off both sides — that
+   * pushed every public page into a horizontal scroll. Measured in a real
+   * browser rather than inferred from the CSS.
    *
-   * The fix is a genuinely different mobile composition, not a smaller one:
-   * below 640px only the lead card shows, full size and centred. That is what a
-   * phone hero should be anyway (spec §20 — "hero visual below the text"), and
-   * the fan itself is untouched from 640px up where there is room for it.
+   * The fix is a genuinely different composition, not a smaller one: below
+   * 768px only the lead card shows, full size and centred. That is what a phone
+   * hero should be anyway (spec §20 — "hero visual below the text"), and the
+   * fan itself is untouched from 768px up where there is room for it.
+   *
+   * The breakpoint matches `useIsWide` in Home.tsx, which renders exactly one
+   * card below 768px; the legend has to follow the cards, not a 640px guess.
    */
-  @media (max-width: 639px) {
-    .pb-fan {
-      --pb-fan-card: 244px;
-      --pb-fan-overlap: 0px;
-    }
-
-    .pb-fan > * + * {
-      display: none;
-    }
-
+  @media (max-width: 767px) {
     /* The legend names cards that are not on screen. */
     .pb-fan-legend > * + * {
       display: none;
     }
   }
 
-  /* Three 340px cards with a 116px bite read as a fan; any less and the
-     section needs more width than it is given. */
+  /* md cards are wide enough to overlap less; see the base rule above for why
+     each overlap is paired with the size JS selects at that breakpoint. */
   @media (min-width: 1280px) {
     .pb-fan {
-      --pb-fan-card: 340px;
-      --pb-fan-overlap: 116px;
+      --pb-fan-overlap: 104px;
     }
   }
 

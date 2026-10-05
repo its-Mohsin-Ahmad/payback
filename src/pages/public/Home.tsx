@@ -24,6 +24,31 @@ import { AreaChart, DonutChart, GroupedBarChart } from '@/components/charts';
 import { ProviderLogo } from '@/components/logos';
 import { DemoBanner, SecurityBadge } from '@/components/ui';
 import { useDemoCards } from '@/components/cards/cardVariants';
+import { useEffect, useState } from 'react';
+
+/**
+ * `true` at the viewport width where the fan has room for all three cards.
+ *
+ * 768px, not 640px: three sm cards overlapped by 92px need 560px, and a 640px
+ * viewport has exactly 560px to give after the section's 40px padding either
+ * side. That left no slack, so a scrollbar alone would have pushed the page into
+ * a horizontal scroll. Below 768px a single lead card is shown instead, which
+ * is the better phone composition anyway.
+ *
+ * Must stay in step with `--pb-fan-overlap` in index.css: this picks the card
+ * *size* (248px vs 340px) and that variable picks the *overlap*.
+ */
+function useIsWide() {
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    setWide(mq.matches);
+    const onChange = () => setWide(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return wide;
+}
 
 export default function HomePage() {
   /**
@@ -35,6 +60,15 @@ export default function HomePage() {
    */
   const demoCards = useDemoCards();
   const heroCard = demoCards[0];
+
+  /* Single source of truth for the fan: labels and cards are derived from one
+     list, so a label can never drift away from the card it names. */
+  const wide = useIsWide();
+  const FAN_CARDS = [
+    { card: demoCards[0], label: 'Green', hint: 'Everyday' },
+    { card: demoCards[1], label: 'Silver', hint: 'Metal' },
+    { card: demoCards[2], label: 'Gold', hint: 'Signature' },
+  ];
   return (
     <div>
       {/* ---------------------------------------------------------------- */}
@@ -243,11 +277,7 @@ export default function HomePage() {
           */}
           <div className="flex flex-col items-center">
             <div className="pb-fan flex items-start justify-center">
-              {[
-                { card: demoCards[0], label: 'Green', hint: 'Everyday' },
-                { card: demoCards[1], label: 'Silver', hint: 'Metal' },
-                { card: demoCards[2], label: 'Gold', hint: 'Signature' },
-              ].map((item, i) => (
+              {(wide ? FAN_CARDS : FAN_CARDS.slice(0, 1)).map((item, i) => (
                 <div
                   key={item.label}
                   className="group relative transition-transform duration-500 ease-out hover:z-20 hover:-translate-y-4 focus-within:z-20 focus-within:-translate-y-4 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
@@ -255,13 +285,18 @@ export default function HomePage() {
                 >
                   <PaybackCard3D
                     card={item.card}
-                    size="md"
+                    /* Size drives the padding and type size together, so it is
+                       what actually sets the rendered width. Forcing a narrower
+                       width in CSS while leaving `md` is what made the PAN
+                       overflow its box and collide with the holder. */
+                    size={wide ? 'md' : 'sm'}
                     fill={false}
-                    flipLabel={false}
-                    /* Width comes from the same variable the overlap uses, so the
-                       fan stays proportional at every breakpoint. The component
-                       sets an inline width, hence the `!` override. */
-                    className="!w-[var(--pb-fan-card)]"
+                    /* `interactive` reserves a 30px flip-label row even when the
+                       label itself is hidden, which stacked ~42px of dead space
+                       under every card. This is a static showcase; the flippable
+                       cards live in the gallery further down the page. */
+                    interactive={false}
+                    showPan={false}
                   />
                 </div>
               ))}
@@ -269,12 +304,8 @@ export default function HomePage() {
 
             {/* Legend, in the same order as the fan so each name maps to the
                 card directly above it. */}
-            <ul className="pb-fan-legend mt-10 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-              {[
-                { label: 'Green', hint: 'Everyday' },
-                { label: 'Platinum', hint: 'Metal' },
-                { label: 'Gold', hint: 'Signature' },
-              ].map((item) => (
+            <ul className="pb-fan-legend mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+              {FAN_CARDS.map((item) => (
                 <li key={item.label} className="text-center">
                   <p className="text-sm font-bold text-slate-900">{item.label}</p>
                   <p className="text-xs text-slate-500">{item.hint}</p>
