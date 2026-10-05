@@ -59,9 +59,41 @@ const footerColumns = [
  * Implemented with a native `<details>`/`<summary>` pair so it works without
  * JavaScript, is keyboard accessible, and needs no open/close state.
  */
+/**
+ * `true` once the viewport reaches Tailwind's `lg` (1024px).
+ *
+ * Same `matchMedia` + `change` shape as `usePrefersReducedMotion` in
+ * components/card3d.tsx.
+ */
+function useIsDesktop() {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setDesktop(mq.matches);
+    const onChange = () => setDesktop(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return desktop;
+}
+
 function FooterColumn({ title, links }: { title: string; links: { label: string; to: string }[] }) {
+  const desktop = useIsDesktop();
+  const [toggled, setToggled] = useState(false);
+
   return (
-    <details className="group border-b border-slate-200 lg:border-0 lg:py-0">
+    <details
+      open={desktop || toggled}
+      onToggle={(e) => {
+        // From `lg` the panel is pinned open. Re-assert on any attempt to
+        // close it, including a keyboard Enter on the summary — pointer
+        // events are already disabled at this width, but a focused summary
+        // can still be activated without a pointer.
+        if (desktop) e.currentTarget.open = true;
+        else setToggled(e.currentTarget.open);
+      }}
+      className="group border-b border-slate-200 lg:border-0 lg:py-0"
+    >
       <summary className="focus-ring flex min-h-[48px] cursor-pointer list-none items-center justify-between py-3 text-sm font-bold text-slate-900 lg:pointer-events-none lg:py-0">
         {title}
         <ChevronDown
