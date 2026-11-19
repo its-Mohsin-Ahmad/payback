@@ -1,0 +1,15 @@
+﻿import puppeteer from "puppeteer-core";
+const b = await puppeteer.launch({ executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless:"new", args:["--no-sandbox"] });
+const p = await b.newPage();
+await p.setViewport({ width: 320, height: 720, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+await p.goto("http://localhost:4173/payback/", { waitUntil: "networkidle2" });
+await new Promise(x=>setTimeout(x,1800));
+await p.screenshot({ path: "shots-home-top.png" });
+await p.evaluate(()=>window.scrollTo(0, document.body.scrollHeight));
+await new Promise(x=>setTimeout(x,900));
+await p.screenshot({ path: "shots-home-footer.png" });
+await p.evaluate((x)=>{ history.pushState({},"","/payback"+x); dispatchEvent(new PopStateEvent("popstate")); }, "/app/cards");
+await new Promise(x=>setTimeout(x,1600));
+await p.screenshot({ path: "shots-cards-top.png" });
+await b.close();
+console.log("shots written");
