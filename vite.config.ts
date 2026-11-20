@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
    *  - production build: the GitHub Pages project sub-path, overridable with
    *    the BASE_PATH env variable (e.g. BASE_PATH=/ for a custom domain root)
    */
-  base: mode === 'development' ? '/' : process.env.BASE_PATH ?? '/payback/',
+  base: mode === 'development' ? '/' : '',
   plugins: [react()],
   resolve: {
     alias: {
