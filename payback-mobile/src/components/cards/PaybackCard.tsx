@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { Colors } from '../../theme/colors';
@@ -52,10 +52,12 @@ export const PaybackCard: React.FC<PaybackCardProps> = ({
         {/* Top Header: Brand + Contactless */}
         <View style={styles.topRow}>
           <View style={styles.brandRow}>
-            {/* Mini 'P' Icon */}
-            <View style={styles.miniLogo}>
-              <Text style={styles.miniLogoText}>P</Text>
-            </View>
+            {/* Mini 'P' Logo Emblem */}
+            <Image
+              source={require('../../../assets/logo.png')}
+              style={{ width: 28, height: 28 }}
+              resizeMode="contain"
+            />
             <Text style={styles.cardBrandText}>PAYBACK</Text>
           </View>
 

@@ -33,6 +33,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "experiments": {
+      "baseUrl": "/payback-app"
+    },
     "extra": {
       "eas": {
         "projectId": "payback-fintech-mobile"
